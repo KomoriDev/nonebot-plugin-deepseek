@@ -90,7 +90,7 @@ plugins = ["nonebot_plugin_deepseek"]
 在项目的配置文件中添加下表中配置
 
 > [!note]
-> `api_key` 请从 [DeepSeek 开放平台](https://platform.deepseek.com/) 获取  
+> `api_key` 请从 [DeepSeek 开放平台](https://platform.deepseek.com/) 获取
 
 |            配置项             | 必填 |            默认值             |
 | :---------------------------: | :--: | :---------------------------: |
@@ -98,6 +98,8 @@ plugins = ["nonebot_plugin_deepseek"]
 |    deepseek__base_url        |  否  |  <https://api.deepseek.com>   |
 |   deepseek__prompt           |  否  |  You are a helpful assistant. |
 |      deepseek__md_to_pic     |  否  |             False             |
+|     deepseek__model          |  否  |          deepseek-chat        |
+|     deepseek__timeout        |  否  |              20               |
 
 ## 🎉 使用
 

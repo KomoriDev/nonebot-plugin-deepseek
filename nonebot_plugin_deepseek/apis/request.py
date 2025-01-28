@@ -24,13 +24,13 @@ class API:
                         {"content": config.prompt, "role": "system"},
                     ]
                     + message,
-                    "model": "deepseek-chat",
+                    "model": config.model,
                     "response_format": {"type": "text"},
                     "stop": None,
                     "stream": False,
                     "tools": registry.to_json(),
                 },
-                timeout=20,
+                timeout=config.timeout,
             )
         if error := response.json().get("error"):
             raise RequestException(error["message"])
