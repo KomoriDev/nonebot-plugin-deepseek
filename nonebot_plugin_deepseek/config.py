@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing_extensions import Self
 from typing import Any, Union, Optional
 
 from nonebot.compat import PYDANTIC_V2
@@ -79,35 +78,45 @@ class CustomModel(BaseModel):
     @classmethod
     def check_max_token(cls, data: Any) -> Any:
         if isinstance(data, dict):
+            name = data.get("name")
+
             if "max_tokens" not in data:
-                name = data.get("name")
                 if name == "deepseek-reasoner":
                     data["max_tokens"] = 4000
                 else:
                     data["max_tokens"] = 4090
-        return data
 
-    @model_validator(mode="after")
-    def check_model(self) -> Self:
-        if self.stop and isinstance(self.stop, list):
-            if len(self.stop) >= 16:
+            stop = data.get("stop")
+            if isinstance(stop, list) and len(stop) >= 16:
                 raise ValueError("字段 `stop` 最多允许设置 16 个字符")
 
-        if self.name == "deepseek-chat":
-            if self.temperature and self.top_p:
-                logger.warning("不建议同时修改 `temperature` 和 `top_p` 字段")
-            if self.top_logprobs and (not self.logprobs or self.logprobs is False):
-                raise ValueError("指定 `top_logprobs` 参数时，`logprobs` 必须为 True")
+            if name == "deepseek-chat":
+                temperature = data.get("temperature")
+                top_p = data.get("top_p")
+                if temperature and top_p:
+                    logger.warning("不建议同时修改 `temperature` 和 `top_p` 字段")
 
-        if self.name == "deepseek-reasoner":
-            if self.max_tokens > 8000:
-                logger.warning(f"模型 {self.name} `max_tokens` 字段最大为 8000")
-            if self.temperature or self.top_p or self.presence_penalty or self.frequency_penalty:
-                logger.warning(f"模型 {self.name} 不支持设置 temperature、top_p、presence_penalty、frequency_penalty")
-            if self.logprobs or self.top_logprobs:
-                raise ValueError(f"模型 {self.name} 不支持设置 logprobs、top_logprobs")
+                top_logprobs = data.get("top_logprobs")
+                logprobs = data.get("logprobs")
+                if top_logprobs and logprobs is False:
+                    raise ValueError("指定 `top_logprobs` 参数时，`logprobs` 必须为 True")
 
-        return self
+            elif name == "deepseek-reasoner":
+                max_tokens = data.get("max_tokens")
+                if max_tokens and max_tokens > 8000:
+                    logger.warning(f"模型 {name} `max_tokens` 字段最大为 8000")
+
+                unsupported_params = ["temperature", "top_p", "presence_penalty", "frequency_penalty"]
+                params_present = [param for param in unsupported_params if param in data]
+                if params_present:
+                    logger.warning(f"模型 {name} 不支持设置 {', '.join(params_present)}")
+
+                logprobs = data.get("logprobs")
+                top_logprobs = data.get("top_logprobs")
+                if logprobs or top_logprobs:
+                    raise ValueError(f"模型 {name} 不支持设置 logprobs、top_logprobs")
+
+        return data
 
     def to_dict(self):
         data = self.model_dump()

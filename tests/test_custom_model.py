@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 
 def test_custom_model():
-    from nonebot_plugin_deepseek.config import CustomModel  # 替换为实际模块路径
+    from nonebot_plugin_deepseek.config import CustomModel
 
     # 测试基础字段验证和默认值
     def test_default_values():
