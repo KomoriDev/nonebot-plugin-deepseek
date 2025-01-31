@@ -122,6 +122,24 @@ plugins = ["nonebot_plugin_deepseek"]
 - `logprobs`: 是否返回所输出 token 的对数概率
 - `top_logprobs`: 指定在每个 token 位置返回最有可能的 tokens
 
+配置示例:
+
+```bash
+deepseek__enable_models='
+[
+  {
+    "name": "deepseek-chat",
+    "max_tokens": 2048,
+    "top_p": 0.5
+  },
+  {
+    "name": "deepseek-reasoner",
+    "max_tokens": 8000
+  }
+]
+'
+```
+
 ## 🎉 使用
 
 > [!note]
