@@ -8,6 +8,7 @@ from nonebot import logger, get_plugin_config
 from pydantic import Field, BaseModel, ConfigDict
 
 from .compat import model_validator
+from ._types import NOT_GIVEN, NotGivenOr
 
 
 class ModelConfig:
@@ -64,17 +65,18 @@ class CustomModel(BaseModel):
     """Sampling temperature. It is not recommended to used it with top_p"""
     top_p: Union[int, float] = Field(default=1, ge=0, le=1)
     """Alternatives to sampling temperature. It is not recommended to used it with temperature"""
-    logprobs: Optional[bool] = Field(default=None)
+    logprobs: NotGivenOr[Union[bool, None]] = Field(default=NOT_GIVEN)
     """Whether to return the log probability of the output token."""
-    top_logprobs: Optional[int] = Field(default=None, le=20)
+    top_logprobs: NotGivenOr[int] = Field(default=NOT_GIVEN, le=20)
     """Specifies that the most likely token be returned at each token position."""
 
     if PYDANTIC_V2:
-        model_config = ConfigDict(extra="allow")
+        model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
     else:
 
         class Config:
             extra = "allow"
+            arbitrary_types_allowed = True
 
     @model_validator(mode="before")
     @classmethod
