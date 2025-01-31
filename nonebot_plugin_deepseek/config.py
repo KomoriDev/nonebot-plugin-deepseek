@@ -109,6 +109,12 @@ class CustomModel(BaseModel):
 
         return self
 
+    def to_dict(self):
+        data = self.model_dump()
+        data.pop("name", None)
+        data.pop("base_url", None)
+        return data
+
 
 class ScopedConfig(BaseModel):
     api_key: str = ""
@@ -133,6 +139,13 @@ class ScopedConfig(BaseModel):
         for model in self.enable_models:
             if model.name == model_name:
                 return model.base_url
+        raise ValueError(f"Model {model_name} not enabled")
+
+    def get_model_config(self, model_name: str) -> CustomModel:
+        """Get model config"""
+        for model in self.enable_models:
+            if model.name == model_name:
+                return model
         raise ValueError(f"Model {model_name} not enabled")
 
 
