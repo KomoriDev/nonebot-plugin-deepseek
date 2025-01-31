@@ -5,7 +5,9 @@ from typing import Any, Union, Optional
 from nonebot.compat import PYDANTIC_V2
 import nonebot_plugin_localstore as store
 from nonebot import logger, get_plugin_config
-from pydantic import Field, BaseModel, ConfigDict, model_validator
+from pydantic import Field, BaseModel, ConfigDict
+
+from .compat import model_validator
 
 
 class ModelConfig:
