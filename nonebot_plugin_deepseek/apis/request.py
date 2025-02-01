@@ -14,9 +14,8 @@ from ..schemas import Balance, ChatChunkedCompletions
 
 class API:
     _client = AsyncClient()
-    _client.headers = {
+    _headers = {
         "Accept": "application/json",
-        "Content-Type": "application/json",
         "Authorization": f"Bearer {config.api_key}",
     }
 
@@ -34,7 +33,9 @@ class API:
                 **model_config.to_dict(),
             }
             logger.debug(f"使用模型 {model}，配置：{json}")
-            async with cls._client.stream("POST", f"https://api.deepseek.com/chat/completions", json=json) as response:
+            async with cls._client.stream(
+                "POST", f"{model_config.base_url}/chat/completions", json=json, headers=cls._headers + {"Content-Type": "application/json"}
+            ) as response:
                 async for chunk in response.aiter_lines():
                     await chunk_queue.put(chunk)
 
@@ -70,5 +71,5 @@ class API:
     @classmethod
     async def query_balance(cls) -> Balance:
         """查询账号余额"""
-        response = await cls._client.get(f"{config.get_model_url('deepseek-chat')}/user/balance")
+        response = await cls._client.get(f"{config.get_model_url('deepseek-chat')}/user/balance", headers=cls._headers)
         return Balance(**response.json())
