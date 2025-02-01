@@ -32,7 +32,7 @@ class Choice:
 
 
 @dataclass
-class ChatCompletions:
+class ChatChunkedCompletions:
     id: str
     """该对话的唯一标识符。"""
     choices: list[Choice]
@@ -41,8 +41,8 @@ class ChatCompletions:
     """创建聊天完成时的 Unix 时间戳（以秒为单位）"""
     model: str
     """生成该 completion 的模型名"""
-    object: Literal["chat.completion"]
-    """对象的类型, 其值为 `chat.completion`"""
+    object: Literal["chat.completion.chunk"]
+    """对象的类型, 其值为 `chat.completion.chunk`"""
     usage: Usage
     """该对话补全请求的用量信息"""
     system_fingerprint: Optional[str] = None
@@ -55,3 +55,4 @@ class ChatCompletions:
         ]
         if isinstance(self.usage, dict):
             self.usage = Usage(**self.usage)
+
