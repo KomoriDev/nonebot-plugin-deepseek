@@ -31,7 +31,7 @@ class API:
                 f"{model_config.base_url}/chat/completions",
                 headers={**cls._headers, "Content-Type": "application/json"},
                 json=json,
-                timeout=50,
+                timeout=config.timeout,
             )
         if error := response.json().get("error"):
             raise RequestException(error["message"])

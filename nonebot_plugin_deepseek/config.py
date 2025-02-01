@@ -140,6 +140,8 @@ class ScopedConfig(BaseModel):
     """Text to Image"""
     enable_send_thinking: bool = False
     """Whether to send model thinking chain"""
+    timeout: float = 50
+    """Request timeout"""
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]

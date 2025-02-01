@@ -101,6 +101,7 @@ plugins = ["nonebot_plugin_deepseek"]
 |       deepseek__prompt       | 否 |                              无                              |                模型预设                |
 |     deepseek__md_to_pic      | 否 |                             False                            |        是否启用 Markdown 转图片        |
 |deepseek__enable_send_thinking| 否 |                             False                            |             是否发送思维链             |
+|       deepseek__timeout      | 否 |                             50                               |              请求超时时间              |
 
 ### `enable_models` 配置说明
 
