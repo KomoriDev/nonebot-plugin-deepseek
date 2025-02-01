@@ -123,10 +123,7 @@ class CustomModel(BaseModel):
         return data
 
     def to_dict(self):
-        data = self.model_dump()
-        data.pop("name", None)
-        data.pop("base_url", None)
-        return data
+        return self.model_dump(exclude_unset=True, exclude_none=True, exclude={"name", "base_url"})
 
 
 class ScopedConfig(BaseModel):
