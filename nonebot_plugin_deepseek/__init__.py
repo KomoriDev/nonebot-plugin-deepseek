@@ -273,7 +273,8 @@ async def _(
                 return
 
             await deepseek.send(output)
-
+    except TimeoutError:
+        await deepseek.finish("等待响应超时，再试试吧")
     except httpx.ReadTimeout:
         await deepseek.finish("网络超时，再试试吧")
     except RequestException as e:
