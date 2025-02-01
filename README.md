@@ -107,7 +107,8 @@ plugins = ["nonebot_plugin_deepseek"]
 `enable_models` 为 [`CustomModel`](https://github.com/KomoriDev/nonebot-plugin-deepseek/blob/ee9f0b0f0568eedb3eb87423e6c1bf271787ab76/nonebot_plugin_deepseek/config.py#L34) 结构的字典，用于控制不同模型的配置，包含的字段有
 
 > [!TIP]
-> 以下字段均在 [DeepSeek API 文档](https://api-docs.deepseek.com/zh-cn/) 有更详细的介绍
+> 以下字段均在 [DeepSeek API 文档](https://api-docs.deepseek.com/zh-cn/) 有更详细的介绍  
+> `deepseek-reasoner` 模型不支持 `logprobs` 和 `top_logprobs` 参数
 
 - `name`: 模型名称（必填）
 - `base_url`: 接口地址（默认为：<https://api.deepseek.com>）（自建模型必填）
