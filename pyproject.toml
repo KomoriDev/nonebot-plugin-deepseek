@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-deepseek"
-version = "0.1.4"
+version = "0.1.5"
 description = "NoneBot DeepSeek 插件。接入 DeepSeek 模型，提供智能对话与问答功能"
 authors = [
     { name = "KomoriDev ", email = "mute231010@gmail.com" },

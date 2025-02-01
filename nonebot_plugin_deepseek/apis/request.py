@@ -27,7 +27,9 @@ class API:
         json = {
             "stream": True,
             "model": model,
-            "messages": [{"content": config.prompt, "role": "user"}] + message if config.prompt else message,
+            "messages": [{"content": config.prompt, "role": "system"}] + message
+            if config.prompt and model == "deepseek-chat"
+            else message,
             **model_config.to_dict(),
         }
         logger.debug(f"使用模型 {model}，配置：{json}")
