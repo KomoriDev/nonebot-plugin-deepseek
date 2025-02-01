@@ -47,6 +47,5 @@ class Message:
     def __post_init__(self) -> None:
         if self.tool_calls:
             self.tool_calls = [
-                ToolCalls(**tool_call) if isinstance(tool_call, dict) else tool_call
-                for tool_call in self.tool_calls
+                ToolCalls(**tool_call) if isinstance(tool_call, dict) else tool_call for tool_call in self.tool_calls
             ]
