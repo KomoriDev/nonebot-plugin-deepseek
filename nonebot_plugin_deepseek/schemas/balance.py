@@ -23,7 +23,4 @@ class Balance:
     balance_infos: list[BalanceInfo]
 
     def __post_init__(self) -> None:
-        self.balance_infos = [
-            BalanceInfo(**info) if isinstance(info, dict) else info
-            for info in self.balance_infos
-        ]
+        self.balance_infos = [BalanceInfo(**info) if isinstance(info, dict) else info for info in self.balance_infos]

@@ -26,9 +26,7 @@ class FunctionRegistry:
             Any: "any",
         }
 
-    def load(
-        self, *directories: str, base_dir: Optional[Union[Path, str]] = None
-    ) -> None:
+    def load(self, *directories: str, base_dir: Optional[Union[Path, str]] = None) -> None:
         base_path = Path(base_dir).resolve() if base_dir else Path.cwd()
 
         if str(base_path) not in sys.path:
@@ -95,9 +93,7 @@ class FunctionRegistry:
         parameters = {}
 
         for name, param in sig.parameters.items():
-            param_type = (
-                param.annotation if param.annotation != inspect.Parameter.empty else Any
-            )
+            param_type = param.annotation if param.annotation != inspect.Parameter.empty else Any
             parameters[name] = {
                 "type": param_type,
                 "description": param_docs.get(name, ""),

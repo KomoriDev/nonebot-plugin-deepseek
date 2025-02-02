@@ -27,12 +27,17 @@ class API:
         json = {
             "stream": True,
             "model": model,
-            "messages": [{"content": config.prompt, "role": "user"}] + message if config.prompt else message,
+            "messages": [{"content": config.prompt, "role": "system"}] + message
+            if config.prompt and model == "deepseek-chat"
+            else message,
             **model_config.to_dict(),
         }
         logger.debug(f"使用模型 {model}，配置：{json}")
         async with cls._client.stream(
-            "POST", f"{model_config.base_url}/chat/completions", json=json, headers=cls._headers + {"Content-Type": "application/json"}
+            "POST",
+            f"{model_config.base_url}/chat/completions",
+            json=json,
+            headers=cls._headers + {"Content-Type": "application/json"},
         ) as response:
             result_model = None
             result_message = ""
@@ -41,7 +46,7 @@ class API:
                 chunk = await asyncio.wait_for(stream_iterator.__anext__(), timeout=10)
                 if not chunk:
                     continue
-                chunk = chunk.lstrip('data:').strip()
+                chunk = chunk.lstrip("data:").strip()
                 if chunk == "[DONE]":
                     break
                 data = loads(chunk)
