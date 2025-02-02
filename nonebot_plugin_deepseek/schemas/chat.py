@@ -6,9 +6,7 @@ from .usage import Usage
 from .message import Message
 from .logprobs import Logprobs
 
-FinishReasonType: TypeAlias = Literal[
-    "stop", "length", "content_filter", "tool_calls", "insufficient_system_resource"
-]
+FinishReasonType: TypeAlias = Literal["stop", "length", "content_filter", "tool_calls", "insufficient_system_resource"]
 
 
 @dataclass
@@ -49,9 +47,6 @@ class ChatCompletions:
     """该指纹代表模型运行的后端配置"""
 
     def __post_init__(self) -> None:
-        self.choices = [
-            Choice(**choice) if isinstance(choice, dict) else choice
-            for choice in self.choices
-        ]
+        self.choices = [Choice(**choice) if isinstance(choice, dict) else choice for choice in self.choices]
         if isinstance(self.usage, dict):
             self.usage = Usage(**self.usage)
