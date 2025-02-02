@@ -19,7 +19,9 @@ class API:
         """普通对话"""
         model_config = config.get_model_config(model)
         json = {
-            "messages": [{"content": config.prompt, "role": "user"}] + message if config.prompt else message,
+            "messages": [{"content": config.prompt, "role": "system"}] + message
+            if config.prompt and model == "deepseek-chat"
+            else message,
             "model": model,
             **model_config.to_dict(),
         }
