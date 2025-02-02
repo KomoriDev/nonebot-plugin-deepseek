@@ -38,7 +38,7 @@ class API:
             result_message = ""
             stream_iterator = response.aiter_lines()
             while True:
-                chunk = await asyncio.wait_for(anext(stream_iterator), timeout=10)
+                chunk = await asyncio.wait_for(stream_iterator.__anext__(), timeout=10)
                 if not chunk:
                     continue
                 chunk = chunk.lstrip('data:').strip()
