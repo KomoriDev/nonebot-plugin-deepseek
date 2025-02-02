@@ -191,6 +191,7 @@ async def _(
 
     try:
         if not context_option.available:
+            # 单次对话处理保持不变
             completion = await API.chat(message, model=model_name.result)
             result = completion.choices[0].message
             if result.tool_calls:
@@ -226,32 +227,77 @@ async def _(
                 )
                 await deepseek.finish(output)
 
+        # 多轮对话处理
         def handler(event: Event):
             text = event.get_plaintext().strip().lower()
             if text in ["结束", "取消", "done"]:
                 return False
+            if text in ["回滚","回滚对话", "rollback"]:  # 检测回滚指令
+                return "rollback"
             return text
 
         permission = Permission(User.from_event(event, perm=matcher.permission))
         waiter = Waiter(waits=["message"], handler=handler, matcher=deepseek, permission=permission)
         waiter.future.set_result("")
 
-        async for resp in waiter(default=False):
+        async for resp in waiter(default=False, timeout=config.context_timeout):
             if resp is False:
                 await deepseek.finish("已结束对话")
+            if resp == "rollback":  # 处理回滚指令
+                if len(message) > 1:  # 确保至少有两条消息（用户和助手）
+                    # 回滚一轮对话
+                    message.pop()  # 移除助手回复
+                    message.pop()  # 移除用户输入
+                    await deepseek.send("已回滚一轮对话，请继续输入")
+                    continue
+                else:
+                    await deepseek.send("无法回滚，当前对话记录为空")
+                    continue
 
+            prev_length = len(message)  # 记录当前消息长度用于回滚
             if resp and isinstance(resp, str):
                 message.append({"role": "user", "content": resp})
 
-            completion = await API.chat(message, model=model_name.result)
+            try:
+                completion = await API.chat(message, model=model_name.result)
+            except httpx.ReadTimeout:
+                # 回滚到API调用前的消息状态
+                if prev_length == 1:
+                    # 如果是第一轮对话，恢复到初始状态
+                    message = []
+                else:
+                    # 否则，恢复到超时前的状态
+                    message = message[:prev_length]
+                await deepseek.send("网络超时，请重新输入")
+                continue  # 继续等待用户输入
+            except RequestException as e:
+                await deepseek.finish(str(e))
+
             result = completion.choices[0].message
             ds_content, ds_think = extract_content_and_think(result)
 
-            result.reasoning_content = None
+            # 发送回复时，根据 config.enable_send_thinking 处理 think
+            output = (
+                ds_think + f"\n----\n{ds_content}"
+                if ds_think and config.enable_send_thinking and ds_content
+                else ds_content
+            )
+            if output:
+                await deepseek.send(output)
+
+            # 将助手回复添加到消息记录时，移除 think 部分
+            result.reasoning_content = None  # 清空 think 内容
             message.append(asdict(result))
 
+            # 处理工具调用
             if result.tool_calls:
-                fc_result = await registry.execute_tool_call(result.tool_calls[0])
+                try:
+                    fc_result = await registry.execute_tool_call(result.tool_calls[0])
+                except Exception as e:
+                    # 回滚助手回复并提示错误
+                    message.pop()  # 移除未成功的助手回复
+                    await deepseek.send(f"工具调用失败：{str(e)}")
+                    continue
                 message.append(
                     {
                         "role": "tool",
@@ -259,22 +305,12 @@ async def _(
                         "content": fc_result,
                     }
                 )
-                resp = ""
+                # 重置等待用户输入
                 waiter.future.set_result("")
                 continue
 
-            output = (
-                ds_think + f"\n----\n{ds_content}"
-                if ds_think and config.enable_send_thinking and ds_content
-                else ds_content
-            )
-
-            if not output:
-                return
-
-            await deepseek.send(output)
-
     except httpx.ReadTimeout:
+        # 处理外层超时（单次对话情况）
         await deepseek.finish("网络超时，再试试吧")
     except RequestException as e:
         await deepseek.finish(str(e))

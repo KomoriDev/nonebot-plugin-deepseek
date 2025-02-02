@@ -141,6 +141,8 @@ class ScopedConfig(BaseModel):
     enable_send_thinking: bool = False
     """Whether to send model thinking chain"""
 
+    context_timeout: Optional[int] = Field(default=120, gt=1)
+
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]
 
