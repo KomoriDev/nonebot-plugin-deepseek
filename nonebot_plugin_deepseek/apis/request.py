@@ -37,7 +37,7 @@ class API:
             "POST",
             f"{model_config.base_url}/chat/completions",
             json=json,
-            headers=cls._headers + {"Content-Type": "application/json"},
+            headers={**cls._headers, "Content-Type": "application/json"},
         ) as response:
             result_model = None
             result_message = ""
@@ -58,6 +58,8 @@ class API:
                     result_model = ChatChunkedCompletions(**data)
                     continue
                 result_message += data["choices"][0]["delta"]["content"]
+            if not result_model:
+                raise RequestException("模型返回数据错误")
             return result_model
 
     @classmethod
