@@ -38,15 +38,15 @@ class ChatChunkedCompletions:
     created: int
     """创建聊天完成时的 Unix 时间戳（以秒为单位）"""
     model: str
-    """生成该 completion 的模型名"""
-    object: Literal["chat.completion.chunk"]
     """对象的类型, 其值为 `chat.completion.chunk`"""
-    usage: Usage
-    """该对话补全请求的用量信息"""
     system_fingerprint: Optional[str] = None
     """该指纹代表模型运行的后端配置"""
+    usage: Optional[Usage] = None
+    """该对话补全请求的用量信息（若非正常结束可能为空）"""
+    object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
+    """生成该 completion 的模型名"""
 
     def __post_init__(self) -> None:
         self.choices = [Choice(**choice) if isinstance(choice, dict) else choice for choice in self.choices]
-        if isinstance(self.usage, dict):
+        if self.usage and isinstance(self.usage, dict):
             self.usage = Usage(**self.usage)
