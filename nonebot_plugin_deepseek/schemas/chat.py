@@ -48,5 +48,5 @@ class ChatChunkedCompletions:
 
     def __post_init__(self) -> None:
         self.choices = [Choice(**choice) if isinstance(choice, dict) else choice for choice in self.choices]
-        if self.usage and isinstance(self.usage, dict):
+        if isinstance(self.usage, dict):
             self.usage = Usage(**self.usage)
