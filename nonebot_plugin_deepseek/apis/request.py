@@ -8,7 +8,7 @@ from ..config import config
 
 # from ..function_call import registry
 from ..exception import RequestException
-from ..schemas import Balance, ChatChunkedCompletions, Message, Choice
+from ..schemas import Choice, Balance, Message, ChatChunkedCompletions
 
 
 class API:
@@ -36,7 +36,8 @@ class API:
         async with cls._client.stream(
             "POST",
             f"{model_config.base_url}/chat/completions",
-            json=json, headers={**cls._headers, "Content-Type": "application/json"},
+            json=json,
+            headers={**cls._headers, "Content-Type": "application/json"},
         ) as response:
             result_model = None
             result_message = Message(role="assistant", content="")
