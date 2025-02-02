@@ -232,7 +232,7 @@ async def _(
             text = event.get_plaintext().strip().lower()
             if text in ["结束", "取消", "done"]:
                 return False
-            if text in ["回滚","回滚对话", "rollback"]:  # 检测回滚指令
+            if text in ["回滚", "回滚对话", "rollback"]:  # 检测回滚指令
                 return "rollback"
             return text
 
