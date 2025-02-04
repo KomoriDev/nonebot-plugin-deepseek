@@ -69,6 +69,10 @@ class CustomModel(BaseModel):
     """Whether to return the log probability of the output token."""
     top_logprobs: NotGivenOr[int] = Field(default=NOT_GIVEN, le=20)
     """Specifies that the most likely token be returned at each token position."""
+    api_key: Optional[str] = None
+    """Custom API Key for the model (optional)"""
+    prompt: Optional[str] = None
+    """Custom Prompt for the model (optional)"""
 
     if PYDANTIC_V2:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
@@ -123,7 +127,7 @@ class CustomModel(BaseModel):
         return data
 
     def to_dict(self):
-        return model_dump(self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url"})
+        return model_dump(self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url","api_key","prompt"})
 
 
 class ScopedConfig(BaseModel):

@@ -18,9 +18,26 @@ class API:
     async def chat(cls, message: list[dict[str, str]], model: str = "deepseek-chat") -> ChatCompletions:
         """普通对话"""
         model_config = config.get_model_config(model)
+
+        """检测模型配置prompt"""
+        prompt = config.prompt
+        if model_config.prompt != None:
+            prompt = model_config.prompt
+            logger.debug(f"使用模型内prompt {prompt}")
+        else:
+            logger.debug(f"使用全局prompt {prompt}")
+
+        """检测模型配置api_key"""
+        if model_config.api_key != None:
+            cls._headers["Authorization"] = f"Bearer {model_config.api_key}"
+            logger.debug(f"使用模型内api_key {model_config.api_key}")
+        else:
+            cls._headers["Authorization"] = f"Bearer {config.api_key}"
+            logger.debug(f"使用全局api_key {config.api_key}")
+
         json = {
-            "messages": [{"content": config.prompt, "role": "system"}] + message
-            if config.prompt and model == "deepseek-chat"
+            "messages": [{"content": prompt, "role": "system"}] + message
+            if prompt #删除了对deepseek-chat的判断
             else message,
             "model": model,
             **model_config.to_dict(),
