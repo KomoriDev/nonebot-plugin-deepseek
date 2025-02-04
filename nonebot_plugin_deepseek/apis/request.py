@@ -21,14 +21,14 @@ class API:
 
         """检测模型配置prompt"""
         prompt = config.prompt
-        if model_config.prompt != None:
+        if model_config.prompt is not None:
             prompt = model_config.prompt
             logger.debug(f"使用模型内prompt {prompt}")
         else:
             logger.debug(f"使用全局prompt {prompt}")
 
         """检测模型配置api_key"""
-        if model_config.api_key != None:
+        if model_config.api_key is not None:
             cls._headers["Authorization"] = f"Bearer {model_config.api_key}"
             logger.debug(f"使用模型内api_key {model_config.api_key}")
         else:
