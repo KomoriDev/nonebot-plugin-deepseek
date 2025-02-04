@@ -2,6 +2,7 @@ import httpx
 from nonebot.log import logger
 
 from ..config import config
+from ..compat import model_dump
 
 # from ..function_call import registry
 from ..exception import RequestException
@@ -19,7 +20,7 @@ class API:
         model_config = config.get_model_config(model)
 
         api_key = model_config.api_key or config.api_key
-        prompt = model_config.prompt or config.prompt
+        prompt = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
 
         json = {
             "messages": [{"content": prompt, "role": "system"}] + message if prompt else message,
