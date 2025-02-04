@@ -38,7 +38,7 @@ deepseek__enable_models='
   { "name": "deepseek-reasoner" },
   {
     "name": "deepseek-r1:7b",
-    "base_url": "localhost:11434/v1"
+    "base_url": "http://localhost:11434/v1"
   }
 ]
 '
