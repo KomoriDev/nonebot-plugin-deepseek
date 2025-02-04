@@ -112,6 +112,8 @@ plugins = ["nonebot_plugin_deepseek"]
 
 - `name`: 模型名称（必填）
 - `base_url`: 接口地址（默认为：<https://api.deepseek.com>）（自建模型必填）
+- `api_key`: API Key（默认使用 `deepseek__api_key`）
+- `prompt`: 模型预设（默认使用 `deepseek__prompt`）
 - `max_tokens`: 模型生成补全的最大 token 数
   - `deepseek-chat`: 介于 1 到 8192 间的整数，默认使用 4096
   - `deepseek-reasoner`: 默认为 4K，最大为 8K

@@ -31,6 +31,7 @@ ollama run deepseek-r1:7b
 配置示例
 
 ```bash
+deepseek__prompt = "You are a helpful assistant."
 deepseek__api_key = "sk-xxx"
 deepseek__enable_models='
 [
@@ -38,7 +39,13 @@ deepseek__enable_models='
   { "name": "deepseek-reasoner" },
   {
     "name": "deepseek-r1:7b",
-    "base_url": "http://localhost:11434/v1"
+    "base_url": "http://localhost:11434/v1",
+    "prompt": None
+  },
+  {
+    "name": "deepseek-r1:free",
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key": "sk-openrouter-xxx"
   }
 ]
 '
