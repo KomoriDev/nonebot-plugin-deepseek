@@ -44,6 +44,10 @@ class CustomModel(BaseModel):
     """Model Name"""
     base_url: str = "https://api.deepseek.com"
     """Custom base URL for this model (optional)"""
+    api_key: Optional[str] = None
+    """Custom API Key for the model (optional)"""
+    prompt: Optional[str] = None
+    """Custom character preset for the model (optional)"""
     max_tokens: int = Field(default=4090, gt=1, lt=8192)
     """
     限制一次请求中模型生成 completion 的最大 token 数
@@ -69,10 +73,6 @@ class CustomModel(BaseModel):
     """Whether to return the log probability of the output token."""
     top_logprobs: NotGivenOr[int] = Field(default=NOT_GIVEN, le=20)
     """Specifies that the most likely token be returned at each token position."""
-    api_key: Optional[str] = None
-    """Custom API Key for the model (optional)"""
-    prompt: Optional[str] = None
-    """Custom Prompt for the model (optional)"""
 
     if PYDANTIC_V2:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)

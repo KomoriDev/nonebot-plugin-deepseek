@@ -114,7 +114,7 @@ async def _(is_superuser: bool = Depends(SuperUser())):
     if not is_superuser:
         return
     try:
-        balances = await API.query_balance()
+        balances = await API.query_balance(model_config.default_model)
 
         await deepseek.finish(
             "".join(
