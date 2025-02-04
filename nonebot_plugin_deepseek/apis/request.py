@@ -37,7 +37,7 @@ class API:
 
         json = {
             "messages": [{"content": prompt, "role": "system"}] + message
-            if prompt #删除了对deepseek-chat的判断
+            if prompt  # 删除了对deepseek-chat的判断
             else message,
             "model": model,
             **model_config.to_dict(),

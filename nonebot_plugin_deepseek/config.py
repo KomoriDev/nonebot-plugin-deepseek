@@ -127,7 +127,9 @@ class CustomModel(BaseModel):
         return data
 
     def to_dict(self):
-        return model_dump(self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url","api_key","prompt"})
+        return model_dump(
+            self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url", "api_key", "prompt"}
+        )
 
 
 class ScopedConfig(BaseModel):
