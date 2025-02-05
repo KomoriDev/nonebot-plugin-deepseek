@@ -35,6 +35,7 @@ else:
 from .apis import API
 from . import hook as hook
 from .utils import DeepSeekHandler
+from .exception import RequestException
 from .extension import CleanDocExtension
 from .config import Config, config, model_config
 
@@ -128,6 +129,8 @@ async def _(is_superuser: bool = Depends(SuperUser())):
             )
         )
     except ValueError as e:
+        await deepseek.finish(str(e))
+    except RequestException as e:
         await deepseek.finish(str(e))
 
 

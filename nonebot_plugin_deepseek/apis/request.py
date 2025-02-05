@@ -43,7 +43,6 @@ class API:
 
     @classmethod
     async def query_balance(cls, model_name: str) -> Balance:
-        """查询账号余额"""
         model_config = config.get_model_config(model_name)
         api_key = model_config.api_key or config.api_key
 
@@ -52,5 +51,6 @@ class API:
                 f"{model_config.base_url}/user/balance",
                 headers={**cls._headers, "Authorization": f"Bearer {api_key}"},
             )
-
+        if response.status_code == 404:
+            raise RequestException("本地模型不支持查询余额，请更换默认模型")
         return Balance(**response.json())
