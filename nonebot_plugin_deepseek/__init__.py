@@ -1,20 +1,14 @@
-from dataclasses import asdict
 from importlib.util import find_spec
 
-import httpx
 from nonebot import require
-from nonebot.adapters import Event
 from nonebot.params import Depends
-from nonebot.matcher import Matcher
-from nonebot.permission import User, SuperUser, Permission
+from nonebot.permission import SuperUser
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 
 require("nonebot_plugin_waiter")
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_localstore")
 from arclet.alconna import config as alc_config
-from nonebot_plugin_waiter import Waiter, prompt
-from nonebot_plugin_alconna.uniseg import UniMessage
 from nonebot_plugin_alconna.builtins.extensions.reply import ReplyMergeExtension
 from nonebot_plugin_alconna import (
     Args,
@@ -32,7 +26,7 @@ from nonebot_plugin_alconna import (
 
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
-    from nonebot_plugin_htmlrender import md_to_pic
+    from nonebot_plugin_htmlrender import md_to_pic as md_to_pic
 
     is_to_pic = True
 else:
@@ -40,10 +34,8 @@ else:
 
 from .apis import API
 from . import hook as hook
-from .function_call import registry
-from .exception import RequestException
+from .utils import DeepSeekHandler
 from .extension import CleanDocExtension
-from .utils import extract_content_and_think
 from .config import Config, config, model_config
 
 __plugin_meta__ = PluginMetadata(
@@ -167,113 +159,16 @@ async def _(
 
 @deepseek.handle()
 async def _(
-    event: Event,
-    matcher: Matcher,
     content: Match[tuple[str, ...]],
     model_name: Query[str] = Query("use-model.model"),
     context_option: Query[bool] = Query("with-context.value"),
-):
-    if not content.available:
-        resp = await prompt("你想对 DeepSeek 说什么呢？", timeout=60)
-        if resp is None:
-            await deepseek.finish("等待超时")
-        text = resp.extract_plain_text()
-        if text in ["结束", "取消", "done"]:
-            await deepseek.finish("已结束对话")
-        chat_content = text
-    else:
-        chat_content = " ".join(content.result)
-
+) -> None:
     if not model_name.available:
         model_name.result = model_config.default_model
 
-    message = [{"role": "user", "content": chat_content}]
-
-    try:
-        if not context_option.available:
-            completion = await API.chat(message, model=model_name.result)
-            result = completion.choices[0].message
-            if result.tool_calls:
-                message.append(asdict(result))
-                fc_result = await registry.execute_tool_call(result.tool_calls[0])
-                message.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": result.tool_calls[0].id,
-                        "content": fc_result,
-                    }
-                )
-                completion = await API.chat(message, model=model_name.result)
-                result = completion.choices[0].message
-
-            ds_content, ds_think = extract_content_and_think(result)
-
-            if is_to_pic:
-                output = (
-                    f"<blockquote><p> {ds_think} </p></blockquote>" + ds_content
-                    if ds_think and config.enable_send_thinking and ds_content
-                    else ds_content
-                )
-                unimsg = UniMessage.image(raw=await md_to_pic(output))  # type: ignore
-                if unimsg:
-                    await unimsg.finish()
-                await deepseek.finish(output)
-            else:
-                output = (
-                    ds_think + f"\n----\n{ds_content}"
-                    if ds_think and config.enable_send_thinking and ds_content
-                    else ds_content
-                )
-                await deepseek.finish(output)
-
-        def handler(event: Event):
-            text = event.get_plaintext().strip().lower()
-            if text in ["结束", "取消", "done"]:
-                return False
-            return text
-
-        permission = Permission(User.from_event(event, perm=matcher.permission))
-        waiter = Waiter(waits=["message"], handler=handler, matcher=deepseek, permission=permission)
-        waiter.future.set_result("")
-
-        async for resp in waiter(default=False):
-            if resp is False:
-                await deepseek.finish("已结束对话")
-
-            if resp and isinstance(resp, str):
-                message.append({"role": "user", "content": resp})
-
-            completion = await API.chat(message, model=model_name.result)
-            result = completion.choices[0].message
-            ds_content, ds_think = extract_content_and_think(result)
-
-            result.reasoning_content = None
-            message.append(asdict(result))
-
-            if result.tool_calls:
-                fc_result = await registry.execute_tool_call(result.tool_calls[0])
-                message.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": result.tool_calls[0].id,
-                        "content": fc_result,
-                    }
-                )
-                resp = ""
-                waiter.future.set_result("")
-                continue
-
-            output = (
-                ds_think + f"\n----\n{ds_content}"
-                if ds_think and config.enable_send_thinking and ds_content
-                else ds_content
-            )
-
-            if not output:
-                return
-
-            await deepseek.send(output)
-    except (httpx.ReadTimeout, TimeoutError):
-        await deepseek.finish("网络超时，再试试吧")
-    except RequestException as e:
-        await deepseek.finish(str(e))
+    model = config.get_model_config(model_name.result)
+    await DeepSeekHandler(
+        model=model,
+        is_to_pic=is_to_pic,
+        is_contextual=context_option.available,
+    ).handle(" ".join(content.result) if content.available else None)

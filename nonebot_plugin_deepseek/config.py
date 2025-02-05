@@ -7,8 +7,8 @@ import nonebot_plugin_localstore as store
 from nonebot import logger, get_plugin_config
 from pydantic import Field, BaseModel, ConfigDict
 
-from .compat import model_validator
 from ._types import NOT_GIVEN, NotGivenOr
+from .compat import model_dump, model_validator
 
 
 class ModelConfig:
@@ -123,7 +123,7 @@ class CustomModel(BaseModel):
         return data
 
     def to_dict(self):
-        return self.model_dump(exclude_unset=True, exclude_none=True, exclude={"name", "base_url"})
+        return model_dump(self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url"})
 
 
 class ScopedConfig(BaseModel):
@@ -140,6 +140,8 @@ class ScopedConfig(BaseModel):
     """Text to Image"""
     enable_send_thinking: bool = False
     """Whether to send model thinking chain"""
+    context_timeout: int = Field(default=50, gt=50)
+    """Multi-round conversation timeout"""
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]
