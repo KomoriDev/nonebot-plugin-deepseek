@@ -29,6 +29,11 @@ class ModelConfig:
             self.default_model = data.get("default_model", self.default_model)
             self.default_prompt = data.get("default_prompt", self.default_prompt)
 
+        enable_models = config.get_enable_models()
+        if self.default_model not in enable_models:
+            self.default_model = enable_models[0]
+            self.save()
+
     def save(self):
         config_data = {
             "default_model": self.default_model,
