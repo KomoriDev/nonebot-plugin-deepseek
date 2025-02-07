@@ -29,6 +29,7 @@ class DeepSeekHandler:
 
         self.event: Event = current_event.get()
         self.matcher: Matcher = current_matcher.get()
+        self.message_id: str = UniMessage.get_message_id(self.event)
         self.waiter: Waiter[Union[str, Literal[False]]] = self._setup_waiter()
 
         self.context: list[dict[str, Any]] = []
@@ -70,23 +71,29 @@ class DeepSeekHandler:
         waiter.future.set_result("")
         return waiter
 
-    def _waiter_handler(self, msg: UniMsg) -> Union[str, Literal[False]]:
+    def _waiter_handler(self, msg: UniMsg, skip: bool = False) -> Union[str, Literal[False]]:
         text = msg.extract_plain_text()
+        if not skip:
+            self.message_id = msg.get_message_id()
         if text in ["结束", "取消", "done"]:
             return False
         if text in ["回滚", "rollback"]:
             return "rollback"
         return text
 
+    def _prompt_handler(self, msg: UniMsg) -> UniMsg:
+        self.message_id = msg.get_message_id()
+        return msg
+
     async def _process_waiter_response(self, resp: Union[bool, str]) -> None:
         if resp == "" and not self.context:
-            _resp = await prompt("你想对 DeepSeek 说什么呢？", timeout=60)
+            _resp = await prompt("你想对 DeepSeek 说什么呢？", handler=self._prompt_handler, timeout=60)
             if _resp is None:
-                await self.matcher.finish("等待超时")
-            resp = self._waiter_handler(UniMessage.generate_sync(message=_resp))
+                await UniMessage("等待超时").finish(reply_to=self.message_id)
+            resp = self._waiter_handler(_resp, skip=True)
 
         if resp is False:
-            await self.matcher.finish("已结束对话")
+            await UniMessage("已结束对话").finish(reply_to=self.message_id)
         elif resp == "rollback":
             await self._handle_rollback()
         elif resp and isinstance(resp, str):
@@ -106,12 +113,14 @@ class DeepSeekHandler:
                 "空" if not self.context else f'{self.context[-1]["role"]}: {self.context[-1]["content"]}'
             )
 
-            await self.matcher.send(f"{status_msg}当前上下文为:\n{remaining_context}\n" "user:（等待输入）")
+            await UniMessage.text(f"{status_msg}当前上下文为:\n{remaining_context}\n" "user:（等待输入）").send(
+                reply_to=self.message_id
+            )
         elif by_error and len(self.context) > 0:
             self.context.clear()
-            await self.matcher.send("Oops! 连接异常，请重新输入")
+            await UniMessage("Oops! 连接异常，请重新输入").send(reply_to=self.message_id)
         else:
-            await self.matcher.send("无法回滚，当前对话记录为空")
+            await UniMessage("无法回滚，当前对话记录为空").send(reply_to=self.message_id)
 
     async def _handle_tool_calls(self, message: Message) -> bool:
         if not message.tool_calls:
@@ -132,7 +141,7 @@ class DeepSeekHandler:
             return completion.choices[0].message
         except (httpx.ReadTimeout, httpx.RequestError):
             if not self.is_contextual:
-                await self.matcher.finish("Oops! 网络超时，请稍后重试")
+                await UniMessage("Oops! 网络超时，请稍后重试").finish(reply_to=self.message_id)
             await self._handle_rollback(by_error=True)
 
     def _extract_content_and_think(self, message: Message) -> tuple[str, str]:
@@ -162,6 +171,6 @@ class DeepSeekHandler:
         message.reasoning_content = None
         if self.is_to_pic:
             if unimsg := UniMessage.image(raw=await md_to_pic(output)):
-                await unimsg.send()
+                await unimsg.send(reply_to=self.message_id)
         else:
-            await self.matcher.send(output)
+            await UniMessage(output).send(reply_to=self.message_id)
