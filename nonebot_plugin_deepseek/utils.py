@@ -15,7 +15,10 @@ from .schemas import Message
 from .config import CustomModel, config
 from .function_call.registry import registry
 
-
+try:
+    from nonebot_plugin_htmlrender import md_to_pic # type: ignore
+except ImportError:
+    pass
 class DeepSeekHandler:
     def __init__(
         self,
@@ -170,7 +173,7 @@ class DeepSeekHandler:
         output = self._format_output(message)
         message.reasoning_content = None
         if self.is_to_pic:
-            if unimsg := UniMessage.image(raw=await md_to_pic(output)):
+            if unimsg := UniMessage.image(raw=await md_to_pic(output)): # type: ignore
                 await unimsg.send(reply_to=self.message_id)
         else:
             await UniMessage(output).send(reply_to=self.message_id)
