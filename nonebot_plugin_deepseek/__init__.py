@@ -23,8 +23,9 @@ from nonebot_plugin_alconna import (
     CommandMeta,
     on_alconna,
 )
+from .config import Config, config, model_config
 
-if find_spec("nonebot_plugin_htmlrender"):
+if find_spec("nonebot_plugin_htmlrender") and config.md_to_pic:
     require("nonebot_plugin_htmlrender")
     from nonebot_plugin_htmlrender import md_to_pic as md_to_pic
 
@@ -37,7 +38,6 @@ from . import hook as hook
 from .utils import DeepSeekHandler
 from .exception import RequestException
 from .extension import CleanDocExtension
-from .config import Config, config, model_config
 
 __plugin_meta__ = PluginMetadata(
     name="DeepSeek",
@@ -54,8 +54,6 @@ __plugin_meta__ = PluginMetadata(
     },
 )
 
-if not config.md_to_pic:
-    is_to_pic = False
 
 ns = Namespace("deepseek", disable_builtin_options=set())
 alc_config.namespaces["deepseek"] = ns

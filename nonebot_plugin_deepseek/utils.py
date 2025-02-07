@@ -1,11 +1,11 @@
 import re
+import importlib
 from dataclasses import asdict
 from typing import Any, Union, Literal, Optional
 
 import httpx
 from nonebot.adapters import Event
 from nonebot.permission import User, Permission
-from nonebot_plugin_htmlrender import md_to_pic
 from nonebot_plugin_waiter import Waiter, prompt
 from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage
 from nonebot.matcher import Matcher, current_event, current_matcher
@@ -33,7 +33,9 @@ class DeepSeekHandler:
         self.waiter: Waiter[Union[str, Literal[False]]] = self._setup_waiter()
 
         self.context: list[dict[str, Any]] = []
-
+        
+        if self.is_to_pic:
+            self.md_to_pic = importlib.import_module("nonebot_plugin_htmlrender").md_to_pic
     async def handle(self, content: Optional[str]) -> None:
         if content:
             self.context.append({"role": "user", "content": content})
@@ -170,7 +172,7 @@ class DeepSeekHandler:
         output = self._format_output(message)
         message.reasoning_content = None
         if self.is_to_pic:
-            if unimsg := UniMessage.image(raw=await md_to_pic(output)):
+            if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):
                 await unimsg.send(reply_to=self.message_id)
         else:
             await UniMessage(output).send(reply_to=self.message_id)
