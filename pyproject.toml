@@ -9,7 +9,7 @@ license = { text = "MIT" }
 readme = "README.md"
 keywords = []
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "nonebot2>=2.4.1",
     "nonebot-plugin-alconna>=0.54.2",
