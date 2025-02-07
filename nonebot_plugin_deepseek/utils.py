@@ -33,9 +33,10 @@ class DeepSeekHandler:
         self.waiter: Waiter[Union[str, Literal[False]]] = self._setup_waiter()
 
         self.context: list[dict[str, Any]] = []
-        
+
         if self.is_to_pic:
             self.md_to_pic = importlib.import_module("nonebot_plugin_htmlrender").md_to_pic
+
     async def handle(self, content: Optional[str]) -> None:
         if content:
             self.context.append({"role": "user", "content": content})
