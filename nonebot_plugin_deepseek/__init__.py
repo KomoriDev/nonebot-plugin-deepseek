@@ -26,7 +26,7 @@ from nonebot_plugin_alconna import (
 
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
-    from nonebot_plugin_htmlrender import md_to_pic as md_to_pic # type: ignore
+    from nonebot_plugin_htmlrender import md_to_pic as md_to_pic  # type: ignore
 
     is_to_pic = True
 else:
