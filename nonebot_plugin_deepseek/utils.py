@@ -34,8 +34,7 @@ class DeepSeekHandler:
 
         self.context: list[dict[str, Any]] = []
 
-        if self.is_to_pic:
-            self.md_to_pic = importlib.import_module("nonebot_plugin_htmlrender").md_to_pic
+        self.md_to_pic = importlib.import_module("nonebot_plugin_htmlrender").md_to_pic if self.is_to_pic else None
 
     async def handle(self, content: Optional[str]) -> None:
         if content:
@@ -173,7 +172,7 @@ class DeepSeekHandler:
         output = self._format_output(message)
         message.reasoning_content = None
         if self.is_to_pic:
-            if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):
+            if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):  # type: ignore
                 await unimsg.send(reply_to=self.message_id)
         else:
             await UniMessage(output).send(reply_to=self.message_id)
