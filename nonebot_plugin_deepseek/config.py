@@ -153,6 +153,14 @@ class ScopedConfig(BaseModel):
     """Whether to send model thinking chain"""
     context_timeout: int = Field(default=50, gt=50)
     """Multi-round conversation timeout"""
+    enable_tts: bool = False
+    """Text to Speech"""
+    tts_api_url: str = ""
+    """Your GPT-Sovits API Url """
+    default_tts_model: str = ""
+    """Default TTS Model"""
+    default_tts_speaker: str = ""
+    """Default TTS Speaker"""
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]

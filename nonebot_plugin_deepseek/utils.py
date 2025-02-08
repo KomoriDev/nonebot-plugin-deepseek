@@ -174,5 +174,8 @@ class DeepSeekHandler:
         if self.is_to_pic:
             if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):  # type: ignore
                 await unimsg.send(reply_to=self.message_id)
+        elif config.enable_tts:
+            output = UniMessage.audio(raw=await API.enable_tts(output))
+            await UniMessage(output).send()
         else:
             await UniMessage(output).send(reply_to=self.message_id)

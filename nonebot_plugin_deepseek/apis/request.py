@@ -54,3 +54,66 @@ class API:
         if response.status_code == 404:
             raise RequestException("本地模型不支持查询余额，请更换默认模型")
         return Balance(**response.json())
+
+    @classmethod
+    async def get_tts_models(cls) -> list[str]:
+        # Todo: Test and implement this method. Not Finished.
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{config.enable_tts}/models",
+                headers={**cls._headers},
+            )
+        return response.json()
+
+    @classmethod
+    async def get_tts_speakers(cls, model_name: str) -> list[str]:
+        # Todo: Test and implement this method. Not Finished.
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{config.enable_tts}/spks",
+                headers={**cls._headers},
+                json={"model_name": model_name},
+            )
+        return response.json()
+
+    @classmethod
+    async def enable_tts(cls, text: str) -> bytes:
+        json = {
+            "app_key": "",
+            "audio_dl_url": "",
+            "model_name": config.default_tts_model,
+            "speaker_name": config.default_tts_speaker,
+            "prompt_text_lang": "中文",
+            "emotion": "随机",
+            "text": text,
+            "text_lang": "中文",
+            "top_k": 10,
+            "top_p": 1,
+            "temperature": 1,
+            "text_split_method": "按标点符号切",
+            "batch_size": 1,
+            "batch_threshold": 0.75,
+            "split_bucket": True,
+            "speed_facter": 1,
+            "fragment_interval": 0.3,
+            "media_type": "wav",
+            "parallel_infer": True,
+            "repetition_penalty": 1.35,
+            "seed": -1,
+        }
+        logger.debug(
+            f"[GPT-Sovits] 使用模型 {config.default_tts_model}，讲话人：{config.default_tts_speaker}, 配置：{json}"
+        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{config.tts_api_url}/infer_single",
+                headers={**cls._headers},
+                json=json,
+                timeout=50,
+            )
+        if audio_url := response.json().get("audio_url"):
+            async with httpx.AsyncClient() as client:
+                response = await client.get(audio_url)
+                return response.content
+        else:
+            raise RequestException("语音合成失败")
