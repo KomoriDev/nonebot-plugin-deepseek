@@ -26,13 +26,8 @@ from nonebot_plugin_alconna import (
 
 from .config import Config, config, model_config
 
-if find_spec("nonebot_plugin_htmlrender") and config.md_to_pic:
+if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
-    from nonebot_plugin_htmlrender import md_to_pic as md_to_pic
-
-    is_to_pic = True
-else:
-    is_to_pic = False
 
 from .apis import API
 from . import hook as hook
@@ -93,7 +88,7 @@ deepseek = on_alconna(
                 Args[
                     "state#状态",
                     ["enable", "disable", "on", "off"],
-                    Field(completion=lambda: f"请输入状态，预期为：{config.get_enable_models()} 其中之一"),
+                    Field(completion=lambda: '请输入状态，预期为：["enable", "disable", "on", "off"] 其中之一'),
                 ],
                 help_text="启用 Markdown 转图片",
             ),
