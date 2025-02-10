@@ -57,52 +57,40 @@ class API:
 
     @classmethod
     async def get_tts_models(cls) -> list[str]:
-        # Todo: Test and implement this method. Not Finished.
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{config.enable_tts}/models",
+                f"{config.tts_api_url}/models",
                 headers={**cls._headers},
             )
         return response.json()
 
     @classmethod
     async def get_tts_speakers(cls, model_name: str) -> list[str]:
-        # Todo: Test and implement this method. Not Finished.
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{config.enable_tts}/spks",
+                f"{config.tts_api_url}/spks",
                 headers={**cls._headers},
-                json={"model_name": model_name},
+                json={"model": model_name},
             )
-        return response.json()
+        if speakers := response.json().get("speakers"):
+            return list(speakers.keys())
+        else:
+            raise RequestException("获取 TTS 模型讲话人列表失败")
 
     @classmethod
-    async def enable_tts(cls, text: str) -> bytes:
+    async def text_to_speach(cls, text: str, model: str) -> bytes:
+        model_config = await config.get_tts_model(model)
+        model_name = model_config.model_name
+        speaker = model_config.speaker_name
         json = {
-            "app_key": "",
-            "audio_dl_url": "",
-            "model_name": config.default_tts_model,
-            "speaker_name": config.default_tts_speaker,
-            "prompt_text_lang": "中文",
-            "emotion": "随机",
+            "model_name": model_name,
+            "speaker_name": speaker,
             "text": text,
-            "text_lang": "中文",
-            "top_k": 10,
-            "top_p": 1,
-            "temperature": 1,
-            "text_split_method": "按标点符号切",
-            "batch_size": 1,
-            "batch_threshold": 0.75,
-            "split_bucket": True,
-            "speed_facter": 1,
-            "fragment_interval": 0.3,
-            "media_type": "wav",
-            "parallel_infer": True,
-            "repetition_penalty": 1.35,
-            "seed": -1,
+            **model_config.to_dict(),
         }
+
         logger.debug(
-            f"[GPT-Sovits] 使用模型 {config.default_tts_model}，讲话人：{config.default_tts_speaker}, 配置：{json}"
+            f"[GPT-Sovits] 使用模型 {model}，讲话人：{speaker}, 配置：{json}"
         )
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -111,6 +99,7 @@ class API:
                 json=json,
                 timeout=50,
             )
+        logger.debug(f"[GPT-Sovits] Response: {response.text}")
         if audio_url := response.json().get("audio_url"):
             async with httpx.AsyncClient() as client:
                 response = await client.get(audio_url)

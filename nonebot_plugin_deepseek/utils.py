@@ -12,8 +12,8 @@ from nonebot.matcher import Matcher, current_event, current_matcher
 
 from .apis import API
 from .schemas import Message
-from .config import CustomModel, config
 from .function_call.registry import registry
+from .config import CustomTTS, CustomModel, config
 
 
 class DeepSeekHandler:
@@ -22,11 +22,12 @@ class DeepSeekHandler:
         model: CustomModel,
         is_to_pic: bool,
         is_contextual: bool,
+        tts_model: Optional[CustomTTS] = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
         self.is_contextual: bool = is_contextual
-
+        self.tts_model: Optional[CustomTTS] = tts_model
         self.event: Event = current_event.get()
         self.matcher: Matcher = current_matcher.get()
         self.message_id: str = UniMessage.get_message_id(self.event)
@@ -174,8 +175,8 @@ class DeepSeekHandler:
         if self.is_to_pic:
             if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):  # type: ignore
                 await unimsg.send(reply_to=self.message_id)
-        elif config.enable_tts:
-            output = UniMessage.audio(raw=await API.enable_tts(output))
+        elif config.enable_tts and self.tts_model:
+            output = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
             await UniMessage(output).send()
         else:
             await UniMessage(output).send(reply_to=self.message_id)
