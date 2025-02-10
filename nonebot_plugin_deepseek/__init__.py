@@ -24,9 +24,16 @@ from nonebot_plugin_alconna import (
     on_alconna,
 )
 
-from .config import Config, config, model_config, preset_tts_list
+from .config import Config
+from .config import model_config
+from .config import config as plugin_config
 
-if find_spec("nonebot_plugin_htmlrender") and config.md_to_pic:
+if plugin_config.enable_tts:
+    from .config import preset_tts_list
+else:
+    preset_tts_list = []
+
+if find_spec("nonebot_plugin_htmlrender") and plugin_config.md_to_pic:
     require("nonebot_plugin_htmlrender")
     from nonebot_plugin_htmlrender import md_to_pic as md_to_pic
 
@@ -67,8 +74,8 @@ deepseek = on_alconna(
             "--use-model",
             Args[
                 "model#模型名称",
-                config.get_enable_models(),
-                Field(completion=lambda: f"请输入模型名，预期为：{config.get_enable_models()} 其中之一"),
+                plugin_config.get_enable_models(),
+                Field(completion=lambda: f"请输入模型名，预期为：{plugin_config.get_enable_models()} 其中之一"),
             ],
             help_text="指定模型",
         ),
@@ -82,8 +89,8 @@ deepseek = on_alconna(
                 "--set-default",
                 Args[
                     "model#模型名称",
-                    config.get_enable_models(),
-                    Field(completion=lambda: f"请输入模型名，预期为：{config.get_enable_models()} 其中之一"),
+                    plugin_config.get_enable_models(),
+                    Field(completion=lambda: f"请输入模型名，预期为：{plugin_config.get_enable_models()} 其中之一"),
                 ],
                 dest="set",
                 help_text="设置默认模型",
@@ -159,7 +166,7 @@ async def _(is_superuser: bool = Depends(SuperUser())):
 async def _():
     model_list = "\n".join(
         f"- {model}（默认）" if model == model_config.default_model else f"- {model}"
-        for model in config.get_enable_models()
+        for model in plugin_config.get_enable_models()
     )
     message = (
         f"支持的模型列表: \n{model_list}\n"
@@ -185,8 +192,10 @@ async def _(
 async def _():
     model_list = ""
     spks_list = ""
+    if not plugin_config.enable_tts:
+        await deepseek.finish("当前未启用TTS功能")
     for model in await API.get_tts_models():
-        default_model = await config.get_tts_model(model_config.default_tts_model)
+        default_model = await plugin_config.get_tts_model(model_config.default_tts_model)
         spks_list = "|".join(
             f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else f"{spk}"
             for spk in await API.get_tts_speakers(model)
@@ -194,7 +203,7 @@ async def _():
         model_list += f"{model}\n - {spks_list}\n"
     custom_models = "\n".join(
         f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
-        for model in config.get_enable_tts()
+        for model in plugin_config.get_enable_tts()
     )
     message = f"支持的TTS模型列表: \n{model_list}\n自定义预设:\n{custom_models}"
     await deepseek.finish(message)
@@ -205,6 +214,8 @@ async def _(
     is_superuser: bool = Depends(SuperUser()),
     model: Query[str] = Query("tts.set.model"),
 ):
+    if not plugin_config.enable_tts:
+        await deepseek.finish("当前未启用TTS功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
     model_config.default_tts_model = model.result
@@ -222,13 +233,13 @@ async def _(
     tts_model = None
     if not model_name.available:
         model_name.result = model_config.default_model
-    if use_tts.available and config.enable_tts:
-        tts_model = await config.get_tts_model(model_config.default_tts_model)
+    if use_tts.available and plugin_config.enable_tts:
+        tts_model = await plugin_config.get_tts_model(model_config.default_tts_model)
 
-    model = config.get_model_config(model_name.result)
+    model = plugin_config.get_model_config(model_name.result)
     await DeepSeekHandler(
         model=model,
         is_to_pic=is_to_pic,
         is_contextual=context_option.available,
-        tts_model=tts_model if use_tts.available and config.enable_tts else None,
+        tts_model=tts_model if use_tts.available and plugin_config.enable_tts else None,
     ).handle(" ".join(content.result) if content.available else None)
