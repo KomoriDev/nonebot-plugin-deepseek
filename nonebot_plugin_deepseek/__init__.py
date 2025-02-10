@@ -45,7 +45,7 @@ from .apis import API
 from . import hook as hook
 from .utils import DeepSeekHandler
 from .exception import RequestException
-from .extension import CleanDocExtension
+from .extension import ParseExtension, CleanDocExtension
 
 __plugin_meta__ = PluginMetadata(
     name="DeepSeek",
@@ -125,7 +125,7 @@ deepseek = on_alconna(
     use_cmd_start=True,
     skip_for_unmatch=False,
     comp_config={"lite": True},
-    extensions=[ReplyMergeExtension, CleanDocExtension],
+    extensions=[ReplyMergeExtension, CleanDocExtension, ParseExtension],
 )
 
 deepseek.shortcut("多轮对话", {"command": "deepseek --with-context", "fuzzy": True, "prefix": True})
