@@ -112,20 +112,18 @@ plugins = ["nonebot_plugin_deepseek"]
 ### 帮助
 
 ```bash
-Usage: /deepseek [OPTIONS] COMMAND [ARGS]...
+deepseek --help
+         --balance
 
-╭─ Options ────────────────────────────────────────────╮
-│ --use-model                     指定模型             │
-│ --with-context                  多轮对话             │
-│ --render-markdown  -r --render  渲染 Markdown 为图片 │
-│ --help                          帮助                 │
-╰──────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────╮
-│ model        模型相关设置                            │
-╰──────────────────────────────────────────────────────╯
-╭─ Args ───────────────────────────────────────────────╮
-│ content      内容 [nullable]                         │
-╰──────────────────────────────────────────────────────╯
+         [...content] 
+           --use-model [model]
+           --with-context
+           --render | -r
+
+         model
+           --list | -l
+           --set-default [model]
+           --render-markdown ['enable' | 'disable' | 'on' | 'off']
 ```
 
 ### 问答
