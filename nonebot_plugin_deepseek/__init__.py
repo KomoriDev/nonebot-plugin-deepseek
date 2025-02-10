@@ -28,6 +28,9 @@ from .config import Config, config, model_config
 
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
+    htmlrender_enable = True
+else:
+    htmlrender_enable = False
 
 from .apis import API
 from . import hook as hook
@@ -171,7 +174,7 @@ async def _(
 ):
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
-    if find_spec("nonebot_plugin_htmlrender") is None:
+    if not htmlrender_enable:
         await deepseek.finish("Markdown 转图片功能暂不可用")
 
     if state.result == "enable" or state.result == "on":
@@ -197,6 +200,8 @@ async def _(
 
     if not convert_option.available:
         convert_option.result = model_config.enable_md_to_pic
+
+    convert_option.result = convert_option.result if htmlrender_enable else False
 
     model = config.get_model_config(model_name.result)
     await DeepSeekHandler(
