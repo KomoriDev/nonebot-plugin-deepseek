@@ -71,7 +71,7 @@ deepseek = on_alconna(
             help_text="指定模型",
         ),
         Option("--with-context", help_text="启用多轮对话"),
-        Option("--convert-markdown", help_text="转换 Markdown 为图片"),
+        Option("-r|--render|--render-markdown", dest="render", help_text="渲染 Markdown 为图片"),
         Subcommand("--balance", help_text="查看余额"),
         Subcommand(
             "model",
@@ -87,7 +87,7 @@ deepseek = on_alconna(
                 help_text="设置默认模型",
             ),
             Option(
-                "--convert-markdown",
+                "--render-markdown",
                 Args[
                     "state#状态",
                     ["enable", "disable", "on", "off"],
@@ -167,10 +167,10 @@ async def _(
     await deepseek.finish(f"已设置默认模型为：{model.result}")
 
 
-@deepseek.assign("model.convert-markdown")
+@deepseek.assign("model.render-markdown")
 async def _(
     is_superuser: bool = Depends(SuperUser()),
-    state: Query[str] = Query("model.convert-markdown.state"),
+    state: Query[str] = Query("model.render-markdown.state"),
 ):
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
@@ -192,20 +192,20 @@ async def _(
 async def _(
     content: Match[tuple[str, ...]],
     model_name: Query[str] = Query("use-model.model"),
+    render_option: Query[bool] = Query("render.value"),
     context_option: Query[bool] = Query("with-context.value"),
-    convert_option: Query[bool] = Query("convert-markdown.value"),
 ) -> None:
     if not model_name.available:
         model_name.result = model_config.default_model
 
-    if not convert_option.available:
-        convert_option.result = model_config.enable_md_to_pic
+    if not render_option.available:
+        render_option.result = model_config.enable_md_to_pic
 
-    convert_option.result = convert_option.result if htmlrender_enable else False
+    render_option.result = render_option.result if htmlrender_enable else False
 
     model = config.get_model_config(model_name.result)
     await DeepSeekHandler(
         model=model,
-        is_to_pic=convert_option.result,
+        is_to_pic=render_option.result,
         is_contextual=context_option.available,
     ).handle(" ".join(content.result) if content.available else None)
