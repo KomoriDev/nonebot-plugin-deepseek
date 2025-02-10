@@ -72,7 +72,7 @@ deepseek = on_alconna(
             ],
             help_text="指定模型",
         ),
-        Option("--use-tts",help_text="使用TTS回复"),
+        Option("--use-tts", help_text="使用TTS回复"),
         Option("--with-context", help_text="启用多轮对话"),
         Subcommand("--balance", help_text="查看余额"),
         Subcommand(
@@ -126,6 +126,7 @@ deepseek.shortcut("模型列表", {"command": "deepseek model --list", "fuzzy": 
 deepseek.shortcut("设置默认模型", {"command": "deepseek model --set-default", "fuzzy": True, "prefix": True})
 deepseek.shortcut("TTS模型列表", {"command": "deepseek tts --list", "fuzzy": False, "prefix": True})
 deepseek.shortcut("设置默认TTS模型", {"command": "deepseek tts --set-default", "fuzzy": True, "prefix": True})
+
 
 @deepseek.assign("balance")
 async def _(is_superuser: bool = Depends(SuperUser())):
@@ -192,10 +193,7 @@ async def _():
         f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
         for model in config.get_enable_tts()
     )
-    message = (
-        f"支持的TTS模型列表: \n{model_list}\n"
-        f"自定义预设:\n{custom_models}"
-    )
+    message = f"支持的TTS模型列表: \n{model_list}\n自定义预设:\n{custom_models}"
     await deepseek.finish(message)
 
 
@@ -209,6 +207,7 @@ async def _(
     model_config.default_tts_model = model.result
     model_config.save()
     await deepseek.finish(f"已设置默认TTS模型为：{model.result}")
+
 
 @deepseek.handle()
 async def _(
@@ -228,5 +227,5 @@ async def _(
         model=model,
         is_to_pic=is_to_pic,
         is_contextual=context_option.available,
-        tts_model= tts_model if use_tts.available and config.enable_tts else None,
+        tts_model=tts_model if use_tts.available and config.enable_tts else None,
     ).handle(" ".join(content.result) if content.available else None)

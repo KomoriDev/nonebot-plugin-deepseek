@@ -89,9 +89,7 @@ class API:
             **model_config.to_dict(),
         }
 
-        logger.debug(
-            f"[GPT-Sovits] 使用模型 {model}，讲话人：{speaker}, 配置：{json}"
-        )
+        logger.debug(f"[GPT-Sovits] 使用模型 {model}，讲话人：{speaker}, 配置：{json}")
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{config.tts_api_url}/infer_single",

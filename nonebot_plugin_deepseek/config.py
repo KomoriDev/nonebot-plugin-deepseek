@@ -140,6 +140,7 @@ class CustomModel(BaseModel):
             self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url", "api_key", "prompt"}
         )
 
+
 class CustomTTS(BaseModel):
     name: str
     """TTS Preset Parameters Name"""
@@ -189,9 +190,8 @@ class CustomTTS(BaseModel):
             arbitrary_types_allowed = True
 
     def to_dict(self):
-        return model_dump(
-            self, exclude_none=True, exclude={"name", "model_name", "speaker_name"}
-        )
+        return model_dump(self, exclude_none=True, exclude={"name", "model_name", "speaker_name"})
+
 
 class ScopedConfig(BaseModel):
     api_key: str = ""
@@ -224,6 +224,7 @@ class ScopedConfig(BaseModel):
 
     async def get_preset_tts(self) -> list[str]:
         from .apis import API
+
         preset_list = []
         tts_models = await API.get_tts_models()
         for model in tts_models:
@@ -232,7 +233,6 @@ class ScopedConfig(BaseModel):
                 preset_list.append(f"{model}-{speaker}")
         preset_list += [model.name for model in self.enable_tts_models]
         return preset_list
-
 
     def get_model_url(self, model_name: str) -> str:
         """Get the base_url corresponding to the model"""
@@ -251,6 +251,7 @@ class ScopedConfig(BaseModel):
     async def get_tts_model(self, preset_name: str) -> CustomTTS:
         """Get TTS model config"""
         from .apis import API
+
         for model in self.enable_tts_models:
             if model.name == preset_name:
                 return model
