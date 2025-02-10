@@ -61,6 +61,7 @@ class API:
             response = await client.get(
                 f"{config.tts_api_url}/models",
                 headers={**cls._headers},
+                timeout=30,
             )
         return response.json()
 
@@ -71,6 +72,7 @@ class API:
                 f"{config.tts_api_url}/spks",
                 headers={**cls._headers},
                 json={"model": model_name},
+                timeout=30,
             )
         if speakers := response.json().get("speakers"):
             return list(speakers.keys())
@@ -83,6 +85,7 @@ class API:
         model_name = model_config.model_name
         speaker = model_config.speaker_name
         json = {
+            "access_token": config.tts_access_token,
             "model_name": model_name,
             "speaker_name": speaker,
             "text": text,

@@ -98,7 +98,10 @@ deepseek = on_alconna(
                 Args[
                     "model#模型名称",
                     preset_tts_list,
-                    Field(completion=lambda: f"请输入TTS模型预设名，预期为：{preset_tts_list} 其中之一"),
+                    Field(
+                        completion=lambda: f"请输入TTS模型预设名，预期为：{preset_tts_list[:10]}…… 其中之一\n"
+                        "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
+                    ),
                 ],
                 dest="set",
                 help_text="设置默认TTS模型",

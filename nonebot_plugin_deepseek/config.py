@@ -215,6 +215,7 @@ class ScopedConfig(BaseModel):
     """List of TTS models configurations"""
     tts_api_url: str = ""
     """Your GPT-Sovits API Url """
+    tts_access_token: str = ""
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]
