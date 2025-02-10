@@ -33,13 +33,11 @@ if plugin_config.enable_tts:
 else:
     preset_tts_list = []
 
-if find_spec("nonebot_plugin_htmlrender") and plugin_config.md_to_pic:
+if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
-    from nonebot_plugin_htmlrender import md_to_pic as md_to_pic
-
-    is_to_pic = True
+    htmlrender_enable = True
 else:
-    is_to_pic = False
+    htmlrender_enable = False
 
 from .apis import API
 from . import hook as hook
@@ -81,6 +79,7 @@ deepseek = on_alconna(
         ),
         Option("--use-tts", help_text="使用TTS回复"),
         Option("--with-context", help_text="启用多轮对话"),
+        Option("-r|--render|--render-markdown", dest="render", help_text="渲染 Markdown 为图片"),
         Subcommand("--balance", help_text="查看余额"),
         Subcommand(
             "model",
@@ -94,6 +93,15 @@ deepseek = on_alconna(
                 ],
                 dest="set",
                 help_text="设置默认模型",
+            ),
+            Option(
+                "--render-markdown",
+                Args[
+                    "state#状态",
+                    ["enable", "disable", "on", "off"],
+                    Field(completion=lambda: '请输入状态，预期为：["enable", "disable", "on", "off"] 其中之一'),
+                ],
+                help_text="启用 Markdown 转图片",
             ),
             help_text="模型相关设置",
         ),
@@ -188,6 +196,27 @@ async def _(
     await deepseek.finish(f"已设置默认模型为：{model.result}")
 
 
+@deepseek.assign("model.render-markdown")
+async def _(
+    is_superuser: bool = Depends(SuperUser()),
+    state: Query[str] = Query("model.render-markdown.state"),
+):
+    if not is_superuser:
+        await deepseek.finish("该指令仅超管可用")
+    if not htmlrender_enable:
+        await deepseek.finish("Markdown 转图片功能暂不可用")
+
+    if state.result == "enable" or state.result == "on":
+        state_desc = "开启"
+        model_config.enable_md_to_pic = True
+    else:
+        state_desc = "关闭"
+        model_config.enable_md_to_pic = False
+
+    model_config.save()
+    await deepseek.finish(f"已{state_desc} Markdown 转图片功能")
+
+
 @deepseek.assign("tts.list")
 async def _():
     model_list = ""
@@ -228,6 +257,7 @@ async def _(
     content: Match[tuple[str, ...]],
     model_name: Query[str] = Query("use-model.model"),
     use_tts: Query[bool] = Query("use-tts.value"),
+    render_option: Query[bool] = Query("render.value"),
     context_option: Query[bool] = Query("with-context.value"),
 ) -> None:
     tts_model = None
@@ -237,9 +267,15 @@ async def _(
         tts_model = await plugin_config.get_tts_model(model_config.default_tts_model)
 
     model = plugin_config.get_model_config(model_name.result)
+    if not render_option.available:
+        render_option.result = model_config.enable_md_to_pic
+
+    render_option.result = render_option.result if htmlrender_enable else False
+
+    model = plugin_config.get_model_config(model_name.result)
     await DeepSeekHandler(
         model=model,
-        is_to_pic=is_to_pic,
+        is_to_pic=render_option.result,
         is_contextual=context_option.available,
         tts_model=tts_model if use_tts.available and plugin_config.enable_tts else None,
     ).handle(" ".join(content.result) if content.available else None)

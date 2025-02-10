@@ -16,9 +16,9 @@ class ModelConfig:
     def __init__(self) -> None:
         self.file: Path = store.get_plugin_config_dir() / "config.json"
         self.default_model: str = config.get_enable_models()[0]
-        self.default_prompt: str = config.prompt  # 暂时用不到
         if config.enable_tts:
             self.default_tts_model: str = config.get_enable_tts()[0]
+        self.enable_md_to_pic: bool = config.md_to_pic
         self.load()
 
     def load(self):
@@ -30,9 +30,9 @@ class ModelConfig:
         with open(self.file, encoding="utf-8") as f:
             data = json.load(f)
             self.default_model = data.get("default_model", self.default_model)
-            self.default_prompt = data.get("default_prompt", self.default_prompt)
             if config.enable_tts:
                 self.default_tts_model = data.get("default_tts_model", self.default_tts_model)
+            self.enable_md_to_pic = data.get("enable_md_to_pic", self.enable_md_to_pic)
 
         enable_models = config.get_enable_models()
         if self.default_model not in enable_models:
@@ -42,7 +42,7 @@ class ModelConfig:
     def save(self):
         config_data = {
             "default_model": self.default_model,
-            "default_prompt": self.default_prompt,
+            "enable_md_to_pic": self.enable_md_to_pic,
         }
         if config.enable_tts:
             config_data["default_tts_model"] = self.default_tts_model

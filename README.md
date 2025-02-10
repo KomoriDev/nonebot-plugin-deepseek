@@ -109,6 +109,23 @@ plugins = ["nonebot_plugin_deepseek"]
 > [!note]
 > 请检查你的 `COMMAND_START` 以及上述配置项。这里默认使用 `/`
 
+### 帮助
+
+```bash
+deepseek --help
+         --balance
+
+         [...content] 
+           --use-model [model]
+           --with-context
+           --render | -r
+
+         model
+           --list | -l
+           --set-default [model]
+           --render-markdown ['enable' | 'disable' | 'on' | 'off']
+```
+
 ### 问答
 
 ```bash
@@ -133,19 +150,6 @@ plugins = ["nonebot_plugin_deepseek"]
 
 快捷指令：`/深度思考 [内容]`
 
-### 设置
-
-> 权限：`设置默认模型` 指令仅 SUPERUSER 可用
-
-```bash
-# 查看支持的模型列表
-/deepseek model -l|--list
-# 设置默认模型
-/deepseek model --set-default [模型名]
-```
-
-快捷指令：`/模型列表` `/设置默认模型 [模型名]`
-
 ### 余额
 
 > 权限：SUPERUSER
@@ -155,6 +159,21 @@ plugins = ["nonebot_plugin_deepseek"]
 ```
 
 快捷指令：`/ds --balance` `/余额`
+
+### 设置
+
+> 权限：`设置默认模型` 指令仅 SUPERUSER 可用
+
+```bash
+# 查看支持的模型列表
+/deepseek model -l|--list
+# 设置默认模型
+/deepseek model --set-default [模型名]
+# 设置 Markdown 转图片
+/deepseek model --render-markdown ['enable' | 'disable' | 'on' | 'off']
+```
+
+快捷指令：`/模型列表` `/设置默认模型 [模型名]`
 
 ### 自定义快捷指令
 
