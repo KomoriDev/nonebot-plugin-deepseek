@@ -113,6 +113,7 @@ class StreamChoiceList:
         **kwargs,
     ) -> None:
         self.choices = [StreamChoice(**i) for i in choices]
+        self.choices_index = [i.index for i in self.choices]
         self.id = id
         self.created = created
         self.model = model
@@ -126,12 +127,16 @@ class StreamChoiceList:
             self.system_fingerprint = other.system_fingerprint
         if self.usage != other.usage:
             self.usage = other.usage
-        for i in self.choices:
-            for j in other.choices:
-                if i.index == j.index:
-                    i.update(j)
-        else:
-            self.choices += other.choices
+
+        for other_choice in other.choices:
+            if other_choice.index not in self.choices_index:
+                self.choices.append(other_choice)
+                self.choices_index.append(other_choice.index)
+                continue
+            for self_choice in self.choices:
+                if self_choice.index == other_choice.index:
+                    self_choice.update(other_choice)
+
         return self
 
     def transform(self):
