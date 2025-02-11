@@ -33,7 +33,10 @@ class API:
         logger.debug(f"使用模型 {model}，配置：{json}")
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
-        ret = await common_request(model_config.base_url, api_key, json)
+        if model_config.stream:
+            ret = await stream_request(model_config.base_url, api_key, json)
+        else:
+            ret = await common_request(model_config.base_url, api_key, json)
 
         return ret
 
