@@ -13,7 +13,7 @@ requires-python = ">=3.9"
 dependencies = [
     "nonebot2>=2.4.1",
     "nonebot-plugin-alconna>=0.54.2",
-    "httpx>=0.28.1",
+    "httpx[http2]>=0.28.1",
     "beautifulsoup4>=4.12.3",
     "nonebot-plugin-localstore>=0.7.3",
 ]
