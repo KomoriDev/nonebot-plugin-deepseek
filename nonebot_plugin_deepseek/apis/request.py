@@ -63,6 +63,8 @@ class API:
                 headers={**cls._headers},
                 timeout=30,
             )
+        if response.status_code != 200:
+            raise RequestException("获取 TTS 模型列表失败")
         return response.json()
 
     @classmethod
@@ -81,7 +83,7 @@ class API:
 
     @classmethod
     async def text_to_speach(cls, text: str, model: str) -> bytes:
-        model_config = await config.get_tts_model(model)
+        model_config = config.get_tts_model(model)
         model_name = model_config.model_name
         speaker = model_config.speaker_name
         json = {
