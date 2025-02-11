@@ -18,16 +18,22 @@ class ModelConfig:
         self.file: Path = store.get_plugin_config_dir() / "config.json"
         self.default_model: str = config.get_enable_models()[0]
         self.enable_md_to_pic: bool = config.md_to_pic
-        if config.enable_tts_models:
-            self.available_tts_models: list[str] = asyncio.get_event_loop().run_until_complete(config.get_preset_tts())
+        if tts_config.enable_tts_models:
+            self.available_tts_models: list[str] = asyncio.get_event_loop().run_until_complete(
+                tts_config.get_preset_tts()
+            )
             logger.debug(f"load deepseek tts model: {self.available_tts_models}")
             if not self.available_tts_models:
                 logger.warning("[GPT-Sovits] 未读取到任何可用TTS模型")
-        if isinstance(config.enable_tts_models, list):
-            self.default_tts_model: Optional[str] = config.get_enable_tts()[0] if config.get_enable_tts() else None
+        if isinstance(tts_config.enable_tts_models, list):
+            self.default_tts_model: Optional[str] = (
+                tts_config.get_enable_tts()[0] if tts_config.get_enable_tts() else None
+            )
         else:
             self.default_tts_model = (
-                self.available_tts_models[0] if config.enable_tts_models is True and self.available_tts_models else None
+                self.available_tts_models[0]
+                if tts_config.enable_tts_models is True and self.available_tts_models
+                else None
             )
         self.load()
 
@@ -40,7 +46,7 @@ class ModelConfig:
         with open(self.file, encoding="utf-8") as f:
             data = json.load(f)
             self.default_model = data.get("default_model", self.default_model)
-            if config.enable_tts_models and self.default_tts_model:
+            if tts_config.enable_tts_models and self.default_tts_model:
                 self.default_tts_model = data.get("default_tts_model", self.default_tts_model)
             self.enable_md_to_pic = data.get("enable_md_to_pic", self.enable_md_to_pic)
 
@@ -54,7 +60,7 @@ class ModelConfig:
             "default_model": self.default_model,
             "enable_md_to_pic": self.enable_md_to_pic,
         }
-        if config.enable_tts_models and self.default_tts_model:
+        if tts_config.enable_tts_models and self.default_tts_model:
             config_data["default_tts_model"] = self.default_tts_model
         with open(self.file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -222,15 +228,43 @@ class ScopedConfig(BaseModel):
     """Whether to send model thinking chain"""
     context_timeout: int = Field(default=50, gt=50)
     """Multi-round conversation timeout"""
-    enable_tts_models: Union[list[CustomTTS], bool] = False
-    """List of TTS models configurations"""
-    tts_api_url: str = ""
-    """Your GPT-Sovits API Url """
-    tts_access_token: str = ""
-    """Your GPT-Sovits API Access Token"""
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]
+
+    def get_model_url(self, model_name: str) -> str:
+        """Get the base_url corresponding to the model"""
+        for model in self.enable_models:
+            if model.name == model_name:
+                return model.base_url
+        raise ValueError(f"Model {model_name} not enabled")
+
+    def get_model_config(self, model_name: str) -> CustomModel:
+        """Get model config"""
+        for model in self.enable_models:
+            if model.name == model_name:
+                return model
+        raise ValueError(f"Model {model_name} not enabled")
+
+
+class ScopedTTSConfig(BaseModel):
+    enable_tts_models: Union[list[CustomTTS], bool] = False
+    """List of TTS models configurations"""
+    base_url: str = ""
+    """Your GPT-Sovits API Url """
+    access_token: str = ""
+    """Your GPT-Sovits API Access Token"""
+    audio_dl_url: str = ""
+    """audio download url"""
+    app_key: str = ""
+    """infer secret key"""
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_audio_dl_url(cls, data: dict) -> dict:
+        if not data.get("audio_dl_url"):
+            data["audio_dl_url"] = data["base_url"]
+        return data
 
     def get_enable_tts(self) -> list[str]:
         if isinstance(self.enable_tts_models, bool):
@@ -256,20 +290,6 @@ class ScopedConfig(BaseModel):
             preset_list += self.get_enable_tts()
         return preset_list
 
-    def get_model_url(self, model_name: str) -> str:
-        """Get the base_url corresponding to the model"""
-        for model in self.enable_models:
-            if model.name == model_name:
-                return model.base_url
-        raise ValueError(f"Model {model_name} not enabled")
-
-    def get_model_config(self, model_name: str) -> CustomModel:
-        """Get model config"""
-        for model in self.enable_models:
-            if model.name == model_name:
-                return model
-        raise ValueError(f"Model {model_name} not enabled")
-
     def get_tts_model(self, preset_name: str) -> CustomTTS:
         """Get TTS model config"""
         if not isinstance(self.enable_tts_models, bool):
@@ -290,8 +310,11 @@ class ScopedConfig(BaseModel):
 class Config(BaseModel):
     deepseek: ScopedConfig = Field(default_factory=ScopedConfig)
     """DeepSeek Plugin Config"""
+    deepseek_tts: ScopedTTSConfig = Field(default_factory=ScopedTTSConfig)
+    """DeepSeek TTS Plugin Config"""
 
 
 config = (get_plugin_config(Config)).deepseek
+tts_config = (get_plugin_config(Config)).deepseek_tts
 model_config = ModelConfig()
 logger.debug(f"load deepseek model: {config.get_enable_models()}")

@@ -14,7 +14,7 @@ from nonebot.matcher import Matcher, current_event, current_matcher
 from .apis import API
 from .schemas import Message
 from .function_call.registry import registry
-from .config import CustomTTS, CustomModel, config
+from .config import CustomTTS, CustomModel, config, tts_config
 
 
 class DeepSeekHandler:
@@ -178,7 +178,7 @@ class DeepSeekHandler:
         if self.is_to_pic and callable(self.md_to_pic):
             if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):
                 await unimsg.send(reply_to=self.message_id)
-        elif config.enable_tts_models and self.tts_model:
+        elif tts_config.enable_tts_models and self.tts_model:
             unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
             await unimsg.send()
         else:

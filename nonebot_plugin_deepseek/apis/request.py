@@ -1,8 +1,8 @@
 import httpx
 from nonebot.log import logger
 
-from ..config import config
 from ..compat import model_dump
+from ..config import config, tts_config
 
 # from ..function_call import registry
 from ..exception import RequestException
@@ -59,7 +59,7 @@ class API:
     async def get_tts_models(cls) -> list[str]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{config.tts_api_url}/models",
+                f"{tts_config.base_url}/models",
                 headers={**cls._headers},
                 timeout=30,
             )
@@ -71,7 +71,7 @@ class API:
     async def get_tts_speakers(cls, model_name: str) -> list[str]:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{config.tts_api_url}/spks",
+                f"{tts_config.base_url}/spks",
                 headers={**cls._headers},
                 json={"model": model_name},
                 timeout=30,
@@ -83,21 +83,23 @@ class API:
 
     @classmethod
     async def text_to_speach(cls, text: str, model: str) -> bytes:
-        model_config = config.get_tts_model(model)
+        model_config = tts_config.get_tts_model(model)
         model_name = model_config.model_name
         speaker = model_config.speaker_name
         json = {
-            "access_token": config.tts_access_token,
+            "text": text,
             "model_name": model_name,
             "speaker_name": speaker,
-            "text": text,
+            "app_key": tts_config.app_key,
+            "access_token": tts_config.access_token,
+            "audio_dl_url": tts_config.audio_dl_url,
             **model_config.to_dict(),
         }
 
         logger.debug(f"[GPT-Sovits] 使用模型 {model}，讲话人：{speaker}, 配置：{json}")
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{config.tts_api_url}/infer_single",
+                f"{tts_config.base_url}/infer_single",
                 headers={**cls._headers},
                 json=json,
                 timeout=50,

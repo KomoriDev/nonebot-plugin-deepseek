@@ -24,9 +24,7 @@ from nonebot_plugin_alconna import (
     on_alconna,
 )
 
-from .config import Config
-from .config import model_config
-from .config import config as plugin_config
+from .config import Config, config, tts_config, model_config
 
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
@@ -67,8 +65,8 @@ deepseek = on_alconna(
             "--use-model",
             Args[
                 "model#模型名称",
-                plugin_config.get_enable_models(),
-                Field(completion=lambda: f"请输入模型名，预期为：{plugin_config.get_enable_models()} 其中之一"),
+                config.get_enable_models(),
+                Field(completion=lambda: f"请输入模型名，预期为：{config.get_enable_models()} 其中之一"),
             ],
             help_text="指定模型",
         ),
@@ -83,8 +81,8 @@ deepseek = on_alconna(
                 "--set-default",
                 Args[
                     "model#模型名称",
-                    plugin_config.get_enable_models(),
-                    Field(completion=lambda: f"请输入模型名，预期为：{plugin_config.get_enable_models()} 其中之一"),
+                    config.get_enable_models(),
+                    Field(completion=lambda: f"请输入模型名，预期为：{config.get_enable_models()} 其中之一"),
                 ],
                 dest="set",
                 help_text="设置默认模型",
@@ -170,7 +168,7 @@ async def _(is_superuser: bool = Depends(SuperUser())):
 async def _():
     model_list = "\n".join(
         f"- {model}（默认）" if model == model_config.default_model else f"- {model}"
-        for model in plugin_config.get_enable_models()
+        for model in config.get_enable_models()
     )
     message = (
         f"支持的模型列表: \n{model_list}\n"
@@ -217,13 +215,13 @@ async def _(
 async def _():
     model_list = ""
     spks_list = ""
-    if not plugin_config.enable_tts_models:
+    if not tts_config.enable_tts_models:
         await deepseek.finish("当前未启用TTS功能")
     try:
         tts_models = await API.get_tts_models()
         for model in tts_models:
             if isinstance(model_config.default_tts_model, str):
-                default_model = plugin_config.get_tts_model(model_config.default_tts_model)
+                default_model = tts_config.get_tts_model(model_config.default_tts_model)
                 spks_list = "|".join(
                     f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else f"{spk}"
                     for spk in await API.get_tts_speakers(model)
@@ -233,10 +231,10 @@ async def _():
         model_list = str(e)
     custom_models = "\n".join(
         f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
-        for model in plugin_config.get_enable_tts()
+        for model in tts_config.get_enable_tts()
     )
     message = f"支持的TTS模型列表: \n{model_list}"
-    if isinstance(plugin_config.enable_tts_models, list):
+    if isinstance(tts_config.enable_tts_models, list):
         message += f"\n自定义预设:\n{custom_models}"
     await deepseek.finish(message)
 
@@ -246,7 +244,7 @@ async def _(
     is_superuser: bool = Depends(SuperUser()),
     model: Query[str] = Query("tts.set.model"),
 ):
-    if not plugin_config.enable_tts_models:
+    if not tts_config.enable_tts_models:
         await deepseek.finish("当前未启用TTS功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
@@ -266,19 +264,19 @@ async def _(
     tts_model = None
     if not model_name.available:
         model_name.result = model_config.default_model
-    if use_tts.available and plugin_config.enable_tts_models and isinstance(model_config.default_tts_model, str):
-        tts_model = plugin_config.get_tts_model(model_config.default_tts_model)
+    if use_tts.available and tts_config.enable_tts_models and isinstance(model_config.default_tts_model, str):
+        tts_model = tts_config.get_tts_model(model_config.default_tts_model)
 
-    model = plugin_config.get_model_config(model_name.result)
+    model = config.get_model_config(model_name.result)
     if not render_option.available:
         render_option.result = model_config.enable_md_to_pic
 
     render_option.result = render_option.result if htmlrender_enable else False
 
-    model = plugin_config.get_model_config(model_name.result)
+    model = config.get_model_config(model_name.result)
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,
         is_contextual=context_option.available,
-        tts_model=tts_model if use_tts.available and plugin_config.enable_tts_models else None,
+        tts_model=tts_model if use_tts.available and tts_config.enable_tts_models else None,
     ).handle(" ".join(content.result) if content.available else None)
