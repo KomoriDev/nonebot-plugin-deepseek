@@ -1,5 +1,6 @@
 from json import loads
-from typing import Literal, Optional, Union
+from typing import Union, Literal, Optional
+
 import httpx
 from nonebot.log import logger
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from typing import Literal, Optional, cast
 from typing_extensions import TypeAlias
+from typing import Literal, Optional, cast
 
 from .usage import Usage
 from .message import Message
