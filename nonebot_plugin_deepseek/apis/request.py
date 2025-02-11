@@ -1,3 +1,5 @@
+from json import loads
+from typing import Literal, Optional, Union
 import httpx
 from nonebot.log import logger
 
@@ -6,7 +8,7 @@ from ..compat import model_dump
 
 # from ..function_call import registry
 from ..exception import RequestException
-from ..schemas import Balance, ChatCompletions
+from ..schemas import Balance, ChatCompletions, StreamChoiceList
 
 
 class API:
@@ -30,16 +32,9 @@ class API:
         logger.debug(f"使用模型 {model}，配置：{json}")
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{model_config.base_url}/chat/completions",
-                headers={**cls._headers, "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=json,
-                timeout=50,
-            )
-        if error := response.json().get("error"):
-            raise RequestException(error["message"])
-        return ChatCompletions(**response.json())
+        ret = await common_request(model_config.base_url, api_key, json)
+
+        return ret
 
     @classmethod
     async def query_balance(cls, model_name: str) -> Balance:
@@ -54,3 +49,72 @@ class API:
         if response.status_code == 404:
             raise RequestException("本地模型不支持查询余额，请更换默认模型")
         return Balance(**response.json())
+
+
+async def common_request(base_url: str, api_key: str, json: dict):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=json,
+            timeout=50,
+        )
+    if error := response.json().get("error"):
+        raise RequestException(error["message"])
+    return ChatCompletions(**response.json())
+
+
+async def stream_request(base_url: str, api_key: str, json: dict):
+    json["stream"] = True
+    async with httpx.AsyncClient(http2=True, timeout=None) as client:
+        async with client.stream(
+            "POST",
+            f"{base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=json,
+        ) as response:
+            ret_list: Optional[StreamChoiceList] = None
+            # 异步迭代每个数据块
+            async for chunk in response.aiter_lines():
+                ret = sse_middle(chunk)
+                if ret is None:
+                    continue
+                elif ret[0] == "data":
+                    if ret[1] == "[DONE]":
+                        break
+                    else:
+                        try:
+                            i = loads(ret[1])
+                            if ret_list is None:
+                                ret_list = StreamChoiceList(**i)
+                            else:
+                                ret_list += StreamChoiceList(**i)
+                        except Exception as e:
+                            logger.error(f"解析数据块失败：{ret[1]} ||{e}")
+
+                elif ret[0] == "::":
+                    logger.debug(f"收到SSE注释：{ret[1]}")
+                    continue
+                elif ret[0] == "error":
+                    raise RequestException(ret[1])
+                else:
+                    continue
+            return ret_list.transform()  # type:ignore
+
+
+def sse_middle(line: str) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
+    """单行SSE数据解析"""
+    line = line.strip("\r")  # 去除可能的回车符
+    if not line:
+        return None
+    if ":" in line:
+        field, value = line.split(":", 1)
+        value = value.strip()  # 去除值前的空格
+    else:
+        return None
+    if field == "":
+        return "::", value  # 注释
+    elif field == "data" or field == "event" or field == "id" or field == "retry":
+        return field, value
+
+    return "error", line

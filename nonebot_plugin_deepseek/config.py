@@ -78,6 +78,7 @@ class CustomModel(BaseModel):
     """Whether to return the log probability of the output token."""
     top_logprobs: NotGivenOr[int] = Field(default=NOT_GIVEN, le=20)
     """Specifies that the most likely token be returned at each token position."""
+    stream: NotGivenOr[bool] = Field(default=NOT_GIVEN)
 
     if PYDANTIC_V2:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
@@ -153,6 +154,7 @@ class ScopedConfig(BaseModel):
     """Whether to send model thinking chain"""
     context_timeout: int = Field(default=50, gt=50)
     """Multi-round conversation timeout"""
+    is_stream: bool = False
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]
