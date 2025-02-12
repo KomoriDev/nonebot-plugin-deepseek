@@ -14,6 +14,7 @@ from nonebot.matcher import Matcher, current_event, current_matcher
 from .apis import API
 from .schemas import Message
 from .config import CustomModel, config
+from .exception import RequestException
 from .function_call.registry import registry
 
 
@@ -147,6 +148,10 @@ class DeepSeekHandler:
         except (httpx.ReadTimeout, httpx.RequestError):
             if not self.is_contextual:
                 await UniMessage("Oops! 网络超时，请稍后重试").finish(reply_to=self.message_id)
+            await self._handle_rollback(by_error=True)
+        except RequestException as e:
+            if not self.is_contextual:
+                await UniMessage(str(e)).finish(reply_to=self.message_id)
             await self._handle_rollback(by_error=True)
 
     def _extract_content_and_think(self, message: Message) -> tuple[str, str]:

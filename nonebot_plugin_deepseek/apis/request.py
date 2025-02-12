@@ -103,7 +103,9 @@ async def stream_request(base_url: str, api_key: str, json: dict):
                     raise RequestException(ret[1])
                 else:
                     continue
-            return ret_list.transform()  # type:ignore
+            if ret_list is None:
+                raise RequestException("Oops! 网络超时，请稍后重试")
+            return ret_list.transform()
 
 
 def sse_middle(line: str) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
