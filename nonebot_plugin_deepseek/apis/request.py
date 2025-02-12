@@ -96,6 +96,7 @@ async def stream_request(base_url: str, api_key: str, json: dict):
                             logger.error(f"解析数据块失败：{ret[1]} ||{e}")
 
                 elif ret[0] == "::":
+                    logger.debug(f"收到SSE注释：{ret[1]}")
                     continue
                 elif ret[0] == "error":
                     raise RequestException(ret[1])
