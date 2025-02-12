@@ -1,6 +1,8 @@
 import httpx
 from nonebot.log import logger
 
+from nonebot_plugin_deepseek.schemas.tts import TTSResponse
+
 from ..compat import model_dump
 from ..config import config, tts_config
 
@@ -56,7 +58,7 @@ class API:
         return Balance(**response.json())
 
     @classmethod
-    async def get_tts_models(cls) -> list[str]:
+    async def get_tts_models(cls) -> list[TTSResponse]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{tts_config.base_url}/models",
@@ -65,7 +67,7 @@ class API:
             )
         if response.status_code != 200:
             raise RequestException("获取 TTS 模型列表失败")
-        return response.json()
+        return [await TTSResponse.create(model=model) for model in response.json()]
 
     @classmethod
     async def get_tts_speakers(cls, model_name: str) -> list[str]:

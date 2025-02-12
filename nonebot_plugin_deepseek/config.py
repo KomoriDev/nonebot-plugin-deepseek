@@ -20,7 +20,7 @@ class ModelConfig:
         self.enable_md_to_pic: bool = config.md_to_pic
         if tts_config.enable_tts_models:
             self.available_tts_models: list[str] = asyncio.get_event_loop().run_until_complete(
-                tts_config.get_preset_tts()
+                tts_config.get_available_tts()
             )
             logger.debug(f"load deepseek tts model: {self.available_tts_models}")
             if not self.available_tts_models:
@@ -269,22 +269,16 @@ class ScopedTTSConfig(BaseModel):
             return []
         return [model.name for model in self.enable_tts_models]
 
-    async def get_preset_tts(self) -> list[str]:
+    async def get_available_tts(self) -> list[str]:
         from .apis import API
 
-        preset_list = []
         try:
             tts_models = await API.get_tts_models()
         except RequestException as e:
             tts_models = []
             logger.warning(f"[GPT-Sovits] 获取 TTS 模型列表失败: {e}")
-        for model in tts_models:
-            speakers = await API.get_tts_speakers(model)
-            for speaker in speakers:
-                preset_list.append(f"{model}-{speaker}")
-        if isinstance(self.enable_tts_models, bool):
-            preset_list += []
-        else:
+        preset_list = [f"{model.model}-{spk}" for model in tts_models for spk in model.speakers]
+        if not isinstance(self.enable_tts_models, bool):
             preset_list += self.get_enable_tts()
         return preset_list
 

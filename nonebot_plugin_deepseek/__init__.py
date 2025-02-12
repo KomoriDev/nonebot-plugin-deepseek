@@ -213,20 +213,20 @@ async def _(
 
 @deepseek.assign("tts.list")
 async def _():
-    model_list = ""
-    spks_list = ""
     if not tts_config.enable_tts_models:
         await deepseek.finish("当前未启用TTS功能")
     try:
         tts_models = await API.get_tts_models()
-        for model in tts_models:
-            if isinstance(model_config.default_tts_model, str):
-                default_model = tts_config.get_tts_model(model_config.default_tts_model)
-                spks_list = "|".join(
-                    f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else f"{spk}"
-                    for spk in await API.get_tts_speakers(model)
-                )
-            model_list += f"{model}\n - {spks_list}\n"
+        model_list = "".join(
+            f"{model.model}\n - " +
+            "|".join(
+                f"{spk}(默认)" if default_model.name == f"{model.model}-{spk}" else spk
+                for spk in model.speakers
+            ) + "\n"
+            for model in tts_models
+            if model_config.default_tts_model
+            and (default_model := tts_config.get_tts_model(model_config.default_tts_model))
+        )
     except RequestException as e:
         model_list = str(e)
     custom_models = "\n".join(
