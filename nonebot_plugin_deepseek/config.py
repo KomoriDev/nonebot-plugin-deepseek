@@ -53,6 +53,8 @@ class CustomModel(BaseModel):
     """Custom API Key for the model (optional)"""
     prompt: Optional[str] = None
     """Custom character preset for the model (optional)"""
+    stream: Optional[bool] = Field(default=None)
+    """Streaming"""
     max_tokens: int = Field(default=4090, gt=1, lt=8192)
     """
     限制一次请求中模型生成 completion 的最大 token 数
@@ -78,7 +80,6 @@ class CustomModel(BaseModel):
     """Whether to return the log probability of the output token."""
     top_logprobs: NotGivenOr[int] = Field(default=NOT_GIVEN, le=20)
     """Specifies that the most likely token be returned at each token position."""
-    stream: NotGivenOr[bool] = Field(default=NOT_GIVEN)
 
     if PYDANTIC_V2:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
@@ -154,7 +155,8 @@ class ScopedConfig(BaseModel):
     """Whether to send model thinking chain"""
     context_timeout: int = Field(default=50, gt=50)
     """Multi-round conversation timeout"""
-    is_stream: bool = False
+    stream: bool = False
+    """Stream"""
 
     def get_enable_models(self) -> list[str]:
         return [model.name for model in self.enable_models]
