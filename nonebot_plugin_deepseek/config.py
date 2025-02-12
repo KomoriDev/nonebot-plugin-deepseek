@@ -256,8 +256,6 @@ class ScopedTTSConfig(BaseModel):
     """Your GPT-Sovits API Access Token"""
     audio_dl_url: str = ""
     """audio download url"""
-    app_key: str = ""
-    """infer secret key"""
 
     @model_validator(mode="before")
     @classmethod

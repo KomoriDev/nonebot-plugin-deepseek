@@ -90,7 +90,7 @@ class API:
             "text": text,
             "model_name": model_name,
             "speaker_name": speaker,
-            "app_key": tts_config.app_key,
+            "app_key": tts_config.access_token,
             "access_token": tts_config.access_token,
             "audio_dl_url": tts_config.audio_dl_url,
             **model_config.to_dict(),
