@@ -26,6 +26,8 @@ class ModelConfig:
             tts_logger("DEBUG", f"load deepseek tts model: {self.available_tts_models}")
             if not self.available_tts_models:
                 tts_logger("WARNING", "未读取到任何可用TTS模型")
+        else:
+            self.available_tts_models = []
         if isinstance(tts_config.enable_tts_models, list):
             self.default_tts_model: Optional[str] = (
                 tts_config.get_enable_tts()[0] if tts_config.get_enable_tts() else None
@@ -261,7 +263,7 @@ class ScopedTTSConfig(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def check_audio_dl_url(cls, data: dict) -> dict:
-        if not data.get("audio_dl_url"):
+        if not data.get("audio_dl_url") and data.get("base_url"):
             data["audio_dl_url"] = data["base_url"]
         return data
 
