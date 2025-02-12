@@ -227,15 +227,18 @@ async def _():
             if model_config.default_tts_model
             and (default_model := tts_config.get_tts_model(model_config.default_tts_model))
         )
+        custom_models = "\n".join(
+            f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
+            for model in tts_config.get_enable_tts()
+        )
+        custom_models_msg = f"\n自定义预设:\n{custom_models}"
     except RequestException as e:
         model_list = str(e)
-    custom_models = "\n".join(
-        f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
-        for model in tts_config.get_enable_tts()
-    )
+        custom_models_msg = ""
+
     message = f"支持的TTS模型列表: \n{model_list}"
     if isinstance(tts_config.enable_tts_models, list):
-        message += f"\n自定义预设:\n{custom_models}"
+        message += custom_models_msg
     await deepseek.finish(message)
 
 

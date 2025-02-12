@@ -29,17 +29,11 @@ class ModelConfig:
                 tts_logger("DEBUG", f"load deepseek tts model: {self.available_tts_models}")
         else:
             self.available_tts_models = []
-
-        if isinstance(tts_config.enable_tts_models, list):
-            self.default_tts_model: Optional[str] = (
-                tts_config.get_enable_tts()[0] if tts_config.get_enable_tts() else None
-            )
+        if self.available_tts_models:
+            self.default_tts_model = self.available_tts_models[0]
         else:
-            self.default_tts_model = (
-                self.available_tts_models[0]
-                if tts_config.enable_tts_models is True and self.available_tts_models
-                else None
-            )
+            self.default_tts_model = None
+
         self.load()
 
     def load(self):
@@ -51,13 +45,21 @@ class ModelConfig:
         with open(self.file, encoding="utf-8") as f:
             data = json.load(f)
             self.default_model = data.get("default_model", self.default_model)
-            if tts_config.enable_tts_models and self.default_tts_model:
-                self.default_tts_model = data.get("default_tts_model", self.default_tts_model)
+            if tts_config.enable_tts_models:
+                self.default_tts_model = data.get("default_tts_model")
             self.enable_md_to_pic = data.get("enable_md_to_pic", self.enable_md_to_pic)
 
         enable_models = config.get_enable_models()
         if self.default_model not in enable_models:
             self.default_model = enable_models[0]
+            self.save()
+        if self.enable_md_to_pic != config.md_to_pic:
+            self.enable_md_to_pic = config.md_to_pic
+            self.save()
+        if self.available_tts_models and self.default_tts_model not in self.available_tts_models:
+            self.default_tts_model = self.available_tts_models[0]
+            self.save()
+        if not self.available_tts_models and self.default_tts_model:
             self.save()
 
     def save(self):
@@ -65,7 +67,7 @@ class ModelConfig:
             "default_model": self.default_model,
             "enable_md_to_pic": self.enable_md_to_pic,
         }
-        if tts_config.enable_tts_models and self.default_tts_model:
+        if tts_config.enable_tts_models and self.default_tts_model in self.available_tts_models:
             config_data["default_tts_model"] = self.default_tts_model
         with open(self.file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -279,12 +281,12 @@ class ScopedTTSConfig(BaseModel):
 
         try:
             tts_models = await API.get_tts_models()
+            preset_list = [f"{model.model}-{spk}" for model in tts_models for spk in model.speakers]
+            if not isinstance(self.enable_tts_models, bool):
+                preset_list += self.get_enable_tts()
         except RequestException as e:
-            tts_models = []
+            preset_list = []
             tts_logger("WARNING", f"获取 TTS 模型列表失败: {e}")
-        preset_list = [f"{model.model}-{spk}" for model in tts_models for spk in model.speakers]
-        if not isinstance(self.enable_tts_models, bool):
-            preset_list += self.get_enable_tts()
         return preset_list
 
     def get_tts_model(self, preset_name: str) -> CustomTTS:
