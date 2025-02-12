@@ -78,7 +78,6 @@ async def stream_request(base_url: str, api_key: str, json: dict):
             json=json,
         ) as response:
             ret_list: Optional[StreamChoiceList] = None
-            # 异步迭代每个数据块
             async for chunk in response.aiter_lines():
                 ret = sse_middle(chunk)
                 if ret is None:
@@ -97,7 +96,6 @@ async def stream_request(base_url: str, api_key: str, json: dict):
                             logger.error(f"解析数据块失败：{ret[1]} ||{e}")
 
                 elif ret[0] == "::":
-                    logger.debug(f"收到SSE注释：{ret[1]}")
                     continue
                 elif ret[0] == "error":
                     raise RequestException(ret[1])
@@ -110,16 +108,16 @@ async def stream_request(base_url: str, api_key: str, json: dict):
 
 def sse_middle(line: str) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
     """单行SSE数据解析"""
-    line = line.strip("\r")  # 去除可能的回车符
+    line = line.strip("\r")
     if not line:
         return None
     if ":" in line:
         field, value = line.split(":", 1)
-        value = value.strip()  # 去除值前的空格
+        value = value.strip()
     else:
         return None
     if field == "":
-        return "::", value  # 注释
+        return "::", value
     elif field == "data" or field == "event" or field == "id" or field == "retry":
         return field, value
 
