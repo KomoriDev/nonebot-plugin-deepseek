@@ -59,15 +59,18 @@ class API:
 
     @classmethod
     async def get_tts_models(cls) -> list[TTSResponse]:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{tts_config.base_url}/models",
-                headers={**cls._headers},
-                timeout=30,
-            )
-        if response.status_code != 200:
-            raise RequestException("获取 TTS 模型列表失败")
-        return [await TTSResponse.create(model=model) for model in response.json()]
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{tts_config.base_url}/models",
+                    headers={**cls._headers},
+                    timeout=30,
+                )
+            if response.status_code != 200:
+                raise RequestException(f"获取 TTS 模型列表失败，状态码: {response.status_code}")
+            return [await TTSResponse.create(model=model) for model in response.json()]
+        except httpx.ConnectError as e:
+            raise RequestException(f"连接 TTS 模型服务器失败: {e}")
 
     @classmethod
     async def get_tts_speakers(cls, model_name: str) -> list[str]:
