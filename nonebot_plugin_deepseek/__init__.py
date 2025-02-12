@@ -218,11 +218,11 @@ async def _():
     try:
         tts_models = await API.get_tts_models()
         model_list = "".join(
-            f"{model.model}\n - " +
-            "|".join(
-                f"{spk}(默认)" if default_model.name == f"{model.model}-{spk}" else spk
-                for spk in model.speakers
-            ) + "\n"
+            f"{model.model}\n - "
+            + "|".join(
+                f"{spk}(默认)" if default_model.name == f"{model.model}-{spk}" else spk for spk in model.speakers
+            )
+            + "\n"
             for model in tts_models
             if model_config.default_tts_model
             and (default_model := tts_config.get_tts_model(model_config.default_tts_model))

@@ -1,10 +1,10 @@
 import httpx
-from nonebot.log import logger
 
 from nonebot_plugin_deepseek.schemas.tts import TTSResponse
 
 from ..compat import model_dump
 from ..config import config, tts_config
+from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
 from ..exception import RequestException
@@ -29,7 +29,7 @@ class API:
             "model": model,
             **model_config.to_dict(),
         }
-        logger.debug(f"使用模型 {model}，配置：{json}")
+        ds_logger("DEBUG", f"使用模型 {model}，配置：{json}")
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
         async with httpx.AsyncClient() as client:
@@ -98,7 +98,7 @@ class API:
             **model_config.to_dict(),
         }
 
-        logger.debug(f"[GPT-Sovits] 使用模型 {model}，讲话人：{speaker}, 配置：{json}")
+        tts_logger("DEBUG", f"使用模型 {model}，讲话人：{speaker}, 配置：{json}")
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{tts_config.base_url}/infer_single",
@@ -106,7 +106,7 @@ class API:
                 json=json,
                 timeout=50,
             )
-        logger.debug(f"[GPT-Sovits] Response: {response.text}")
+        tts_logger("DEBUG", f"Response: {response.text}")
         if audio_url := response.json().get("audio_url"):
             async with httpx.AsyncClient() as client:
                 response = await client.get(audio_url)

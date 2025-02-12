@@ -3,11 +3,12 @@ import asyncio
 from pathlib import Path
 from typing import Any, Union, Literal, Optional
 
+from nonebot import get_plugin_config
 from nonebot.compat import PYDANTIC_V2
 import nonebot_plugin_localstore as store
-from nonebot import logger, get_plugin_config
 from pydantic import Field, BaseModel, ConfigDict
 
+from .log import ds_logger, tts_logger
 from .exception import RequestException
 from ._types import NOT_GIVEN, NotGivenOr
 from .compat import model_dump, model_validator
@@ -22,9 +23,9 @@ class ModelConfig:
             self.available_tts_models: list[str] = asyncio.get_event_loop().run_until_complete(
                 tts_config.get_available_tts()
             )
-            logger.debug(f"load deepseek tts model: {self.available_tts_models}")
+            tts_logger("DEBUG", f"load deepseek tts model: {self.available_tts_models}")
             if not self.available_tts_models:
-                logger.warning("[GPT-Sovits] 未读取到任何可用TTS模型")
+                tts_logger("WARNING", "未读取到任何可用TTS模型")
         if isinstance(tts_config.enable_tts_models, list):
             self.default_tts_model: Optional[str] = (
                 tts_config.get_enable_tts()[0] if tts_config.get_enable_tts() else None
@@ -130,7 +131,7 @@ class CustomModel(BaseModel):
                 temperature = data.get("temperature")
                 top_p = data.get("top_p")
                 if temperature and top_p:
-                    logger.warning("不建议同时修改 `temperature` 和 `top_p` 字段")
+                    ds_logger("WARNING", "不建议同时修改 `temperature` 和 `top_p` 字段")
 
                 top_logprobs = data.get("top_logprobs")
                 logprobs = data.get("logprobs")
@@ -140,12 +141,12 @@ class CustomModel(BaseModel):
             elif name == "deepseek-reasoner":
                 max_tokens = data.get("max_tokens")
                 if max_tokens and max_tokens > 8000:
-                    logger.warning(f"模型 {name} `max_tokens` 字段最大为 8000")
+                    ds_logger("WARNING", f"模型 {name} `max_tokens` 字段最大为 8000")
 
                 unsupported_params = ["temperature", "top_p", "presence_penalty", "frequency_penalty"]
                 params_present = [param for param in unsupported_params if param in data]
                 if params_present:
-                    logger.warning(f"模型 {name} 不支持设置 {', '.join(params_present)}")
+                    ds_logger("WARNING", f"模型 {name} 不支持设置 {', '.join(params_present)}")
 
                 logprobs = data.get("logprobs")
                 top_logprobs = data.get("top_logprobs")
@@ -276,7 +277,7 @@ class ScopedTTSConfig(BaseModel):
             tts_models = await API.get_tts_models()
         except RequestException as e:
             tts_models = []
-            logger.warning(f"[GPT-Sovits] 获取 TTS 模型列表失败: {e}")
+            tts_logger("WARNING", f"获取 TTS 模型列表失败: {e}")
         preset_list = [f"{model.model}-{spk}" for model in tts_models for spk in model.speakers]
         if not isinstance(self.enable_tts_models, bool):
             preset_list += self.get_enable_tts()
@@ -309,4 +310,4 @@ class Config(BaseModel):
 config = (get_plugin_config(Config)).deepseek
 tts_config = (get_plugin_config(Config)).deepseek_tts
 model_config = ModelConfig()
-logger.debug(f"load deepseek model: {config.get_enable_models()}")
+ds_logger("DEBUG", f"load deepseek model: {config.get_enable_models()}")
