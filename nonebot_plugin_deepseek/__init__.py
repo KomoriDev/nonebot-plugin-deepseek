@@ -49,7 +49,7 @@ __plugin_meta__ = PluginMetadata(
     extra={
         "unique_name": "DeepSeek",
         "author": "Komorebi <mute231010@gmail.com>",
-        "version": "0.1.7",
+        "version": "0.1.8",
     },
 )
 

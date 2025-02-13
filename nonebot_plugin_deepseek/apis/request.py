@@ -1,3 +1,6 @@
+from json import loads
+from typing import Union, Literal, Optional
+
 import httpx
 
 from nonebot_plugin_deepseek.schemas.tts import TTSResponse
@@ -8,7 +11,7 @@ from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
 from ..exception import RequestException
-from ..schemas import Balance, ChatCompletions
+from ..schemas import Balance, ChatCompletions, StreamChoiceList
 
 
 class API:
@@ -32,16 +35,12 @@ class API:
         ds_logger("DEBUG", f"使用模型 {model}，配置：{json}")
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{model_config.base_url}/chat/completions",
-                headers={**cls._headers, "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=json,
-                timeout=50,
-            )
-        if error := response.json().get("error"):
-            raise RequestException(error["message"])
-        return ChatCompletions(**response.json())
+        if model_dump(model_config, exclude_none=True).get("stream", config.stream):
+            ret = await stream_request(model_config.base_url, api_key, json)
+        else:
+            ret = await common_request(model_config.base_url, api_key, json)
+
+        return ret
 
     @classmethod
     async def query_balance(cls, model_name: str) -> Balance:
@@ -119,3 +118,73 @@ class API:
                 raise RequestException("语音合成失败")
         except httpx.ConnectError as e:
             raise RequestException(f"连接 TTS 服务器失败: {e}")
+
+
+async def common_request(base_url: str, api_key: str, json: dict):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=json,
+            timeout=50,
+        )
+    if error := response.json().get("error"):
+        raise RequestException(error["message"])
+    return ChatCompletions(**response.json())
+
+
+async def stream_request(base_url: str, api_key: str, json: dict):
+    json["stream"] = True
+    async with httpx.AsyncClient(http2=True, timeout=None) as client:
+        async with client.stream(
+            "POST",
+            f"{base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=json,
+        ) as response:
+            ret_list: Optional[StreamChoiceList] = None
+            async for chunk in response.aiter_lines():
+                ret = sse_middle(chunk)
+                if ret is None:
+                    continue
+                elif ret[0] == "data":
+                    if ret[1] == "[DONE]":
+                        break
+                    else:
+                        try:
+                            i = loads(ret[1])
+                            if ret_list is None:
+                                ret_list = StreamChoiceList(**i)
+                            else:
+                                ret_list += StreamChoiceList(**i)
+                        except Exception as e:
+                            ds_logger("ERROR", f"解析数据块失败：{ret[1]} ||{e}")
+
+                elif ret[0] == "::":
+                    ds_logger("ERROR", f"SSE注释：{ret[1]}")
+                    continue
+                elif ret[0] == "error":
+                    raise RequestException(ret[1])
+                else:
+                    continue
+            if ret_list is None:
+                raise RequestException("Oops! 网络超时，请稍后重试")
+            return ret_list.transform()
+
+
+def sse_middle(line: str) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
+    """单行SSE数据解析"""
+    line = line.strip("\r")
+    if not line:
+        return None
+    if ":" in line:
+        field, value = line.split(":", 1)
+        value = value.strip()
+    else:
+        return None
+    if field == "":
+        return "::", value
+    elif field == "data" or field == "event" or field == "id" or field == "retry":
+        return field, value
+
+    return "error", line

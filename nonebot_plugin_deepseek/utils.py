@@ -99,11 +99,11 @@ class DeepSeekHandler:
         if resp == "" and not self.context:
             _resp = await prompt("你想对 DeepSeek 说什么呢？", handler=self._prompt_handler, timeout=60)
             if _resp is None:
-                await UniMessage("等待超时").finish(reply_to=self.message_id)
+                await UniMessage.text("等待超时").finish(reply_to=self.message_id)
             resp = self._waiter_handler(_resp, skip=True)
 
         if resp is False:
-            await UniMessage("已结束对话").finish(reply_to=self.message_id)
+            await UniMessage.text("已结束对话").finish(reply_to=self.message_id)
         elif resp == "rollback":
             await self._handle_rollback()
         elif resp and isinstance(resp, str):
@@ -128,9 +128,9 @@ class DeepSeekHandler:
             )
         elif by_error and len(self.context) > 0:
             self.context.clear()
-            await UniMessage("Oops! 连接异常，请重新输入").send(reply_to=self.message_id)
+            await UniMessage.text("Oops! 连接异常，请重新输入").send(reply_to=self.message_id)
         else:
-            await UniMessage("无法回滚，当前对话记录为空").send(reply_to=self.message_id)
+            await UniMessage.text("无法回滚，当前对话记录为空").send(reply_to=self.message_id)
 
     async def _handle_tool_calls(self, message: Message) -> bool:
         if not message.tool_calls:
@@ -151,7 +151,11 @@ class DeepSeekHandler:
             return completion.choices[0].message
         except (httpx.ReadTimeout, httpx.RequestError):
             if not self.is_contextual:
-                await UniMessage("Oops! 网络超时，请稍后重试").finish(reply_to=self.message_id)
+                await UniMessage.text("Oops! 网络超时，请稍后重试").finish(reply_to=self.message_id)
+            await self._handle_rollback(by_error=True)
+        except RequestException as e:
+            if not self.is_contextual:
+                await UniMessage.text(str(e)).finish(reply_to=self.message_id)
             await self._handle_rollback(by_error=True)
 
     def _extract_content_and_think(self, message: Message) -> tuple[str, str]:
@@ -172,7 +176,7 @@ class DeepSeekHandler:
             return (
                 f"<blockquote><p>{thinking}</p></blockquote>{content}"
                 if self.is_to_pic
-                else f"{thinking}\n----\n{content}"
+                else f"{thinking}\n\n--------------------\n\n{content}"
             )
         return content
 
@@ -195,4 +199,4 @@ class DeepSeekHandler:
             unimsg = UniMessage.image(raw=await self.md_to_pic(output))
             await unimsg.send(reply_to=self.message_id)
         else:
-            await UniMessage(output).send(reply_to=self.message_id)
+            await UniMessage.text(output).send(reply_to=self.message_id)
