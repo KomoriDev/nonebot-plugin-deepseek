@@ -3,15 +3,13 @@ from typing import Union, Literal, Optional
 
 import httpx
 
-from nonebot_plugin_deepseek.schemas.tts import TTSResponse
-
 from ..compat import model_dump
 from ..config import config, tts_config
 from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
 from ..exception import RequestException
-from ..schemas import Balance, ChatCompletions, StreamChoiceList
+from ..schemas import Balance, TTSResponse, ChatCompletions, StreamChoiceList
 
 
 class API:
