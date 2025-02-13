@@ -70,7 +70,6 @@ deepseek = on_alconna(
             ],
             help_text="指定模型",
         ),
-        Option("--use-tts", help_text="使用TTS回复"),
         Option("--with-context", help_text="启用多轮对话"),
         Option("-r|--render|--render-markdown", dest="render", help_text="渲染 Markdown 为图片"),
         Subcommand("--balance", help_text="查看余额"),
@@ -98,25 +97,6 @@ deepseek = on_alconna(
             ),
             help_text="模型相关设置",
         ),
-        Subcommand(
-            "tts",
-            Option("-l|--list", help_text="支持的TTS模型列表"),
-            Option(
-                "--set-default",
-                Args[
-                    "model#模型名称",
-                    model_config.available_tts_models,
-                    Field(
-                        completion=lambda: f"请输入TTS模型预设名，预期为："
-                        f"{model_config.available_tts_models[:10]}…… 其中之一\n"
-                        "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
-                    ),
-                ],
-                dest="set",
-                help_text="设置默认TTS模型",
-            ),
-            help_text="TTS模型相关设置",
-        ),
         namespace=alc_config.namespaces["deepseek"],
         meta=CommandMeta(
             description=__plugin_meta__.description,
@@ -131,13 +111,10 @@ deepseek = on_alconna(
 )
 
 deepseek.shortcut("多轮对话", {"command": "deepseek --with-context", "fuzzy": True, "prefix": True})
-deepseek.shortcut("多轮语音对话", {"command": "deepseek --use-tts --with-context", "fuzzy": True, "prefix": True})
 deepseek.shortcut("深度思考", {"command": "deepseek --use-model deepseek-reasoner", "fuzzy": True, "prefix": True})
 deepseek.shortcut("余额", {"command": "deepseek --balance", "fuzzy": False, "prefix": True})
 deepseek.shortcut("模型列表", {"command": "deepseek model --list", "fuzzy": False, "prefix": True})
 deepseek.shortcut("设置默认模型", {"command": "deepseek model --set-default", "fuzzy": True, "prefix": True})
-deepseek.shortcut("TTS模型列表", {"command": "deepseek tts --list", "fuzzy": False, "prefix": True})
-deepseek.shortcut("设置默认TTS模型", {"command": "deepseek tts --set-default", "fuzzy": True, "prefix": True})
 
 
 @deepseek.assign("balance")
