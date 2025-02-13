@@ -1,6 +1,6 @@
 from nonebot import get_driver
-from nonebot_plugin_alconna import command_manager, Subcommand, Args, Option, Field
 from nonebot_plugin_localstore import get_plugin_cache_dir
+from nonebot_plugin_alconna import Args, Field, Option, Subcommand, command_manager
 
 from .log import ds_logger, tts_logger
 from .config import tts_config, model_config
@@ -24,26 +24,26 @@ async def _() -> None:
             tts_logger("DEBUG", f"load available tts models: {model_config.available_tts_models}")
         command = command_manager.get_command("deepseek::deepseek")
         command.add(
-                Subcommand(
-                    "tts",
-                    Option("-l|--list", help_text="支持的TTS模型列表"),
-                    Option(
-                        "--set-default",
-                        Args[
-                            "model#模型名称",
-                            model_config.available_tts_models,
-                            Field(
-                                completion=lambda: f"请输入TTS模型预设名，预期为："
-                                f"{model_config.available_tts_models[:10]}…… 其中之一\n"
-                                "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
-                            ),
-                        ],
-                        dest="set",
-                        help_text="设置默认TTS模型",
-                    ),
-                    help_text="TTS模型相关设置",
+            Subcommand(
+                "tts",
+                Option("-l|--list", help_text="支持的TTS模型列表"),
+                Option(
+                    "--set-default",
+                    Args[
+                        "model#模型名称",
+                        model_config.available_tts_models,
+                        Field(
+                            completion=lambda: f"请输入TTS模型预设名，预期为："
+                            f"{model_config.available_tts_models[:10]}…… 其中之一\n"
+                            "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
+                        ),
+                    ],
+                    dest="set",
+                    help_text="设置默认TTS模型",
                 ),
-            )
+                help_text="TTS模型相关设置",
+            ),
+        )
         command.add(Option("--use-tts", help_text="使用TTS回复"))
         command.shortcut("TTS模型列表", {"command": "deepseek tts --list", "fuzzy": False, "prefix": True})
         command.shortcut("设置默认TTS模型", {"command": "deepseek tts --set-default", "fuzzy": True, "prefix": True})
