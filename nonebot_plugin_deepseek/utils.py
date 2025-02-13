@@ -169,10 +169,10 @@ class DeepSeekHandler:
 
         return content, thinking
 
-    def _format_output(self, message: Message) -> str:
+    def _format_output(self, message: Message, with_thinking: bool) -> str:
         content, thinking = self._extract_content_and_think(message)
 
-        if config.enable_send_thinking and content and thinking:
+        if with_thinking and content and thinking:
             return (
                 f"<blockquote><p>{thinking}</p></blockquote>{content}"
                 if self.is_to_pic
@@ -181,14 +181,16 @@ class DeepSeekHandler:
         return content
 
     async def _send_response(self, message: Message) -> None:
-        output = self._format_output(message)
+        output = self._format_output(message, config.enable_send_thinking)
         message.reasoning_content = None
         if self.is_use_tts and self.tts_model:
             try:
+                output = self._format_output(message, False)
                 unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
                 await unimsg.send()
             except RequestException as e:
                 tts_logger("ERROR", f"TTS Response error: {e}, Use image or text instead")
+                output = self._format_output(message, config.enable_send_thinking)
                 unimsg = (
                     UniMessage.image(raw=await self.md_to_pic(output))
                     if self.is_to_pic and callable(self.md_to_pic)
