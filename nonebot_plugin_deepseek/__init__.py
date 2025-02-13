@@ -215,15 +215,12 @@ async def _(
 async def _():
     if not tts_config.enable_tts_models:
         await deepseek.finish("当前未启用TTS功能")
-    try:
-        tts_models = await API.get_tts_models()
+    if model_config.tts_model_dict:
         model_list = "".join(
-            f"{model.model}\n - "
-            + "|".join(
-                f"{spk}(默认)" if default_model.name == f"{model.model}-{spk}" else spk for spk in model.speakers
-            )
+            f"{model}\n - "
+            + "|".join(f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else spk for spk in speakers)
             + "\n"
-            for model in tts_models
+            for model, speakers in model_config.tts_model_dict.items()
             if model_config.default_tts_model
             and (default_model := tts_config.get_tts_model(model_config.default_tts_model))
         )
@@ -232,9 +229,8 @@ async def _():
             for model in tts_config.get_enable_tts()
         )
         custom_models_msg = f"\n自定义预设:\n{custom_models}"
-    except RequestException as e:
-        model_list = str(e)
-        custom_models_msg = ""
+    else:
+        await deepseek.finish("当前未查找到可用模型")
 
     message = f"支持的TTS模型列表: \n{model_list}"
     if isinstance(tts_config.enable_tts_models, list):
@@ -280,6 +276,7 @@ async def _(
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,
+        is_use_tts=use_tts.available,
         is_contextual=context_option.available,
         tts_model=tts_model if use_tts.available and tts_config.enable_tts_models else None,
     ).handle(" ".join(content.result) if content.available else None)

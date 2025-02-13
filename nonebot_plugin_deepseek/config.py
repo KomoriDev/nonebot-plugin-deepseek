@@ -1,5 +1,4 @@
 import json
-import asyncio
 from pathlib import Path
 from typing import Any, Union, Literal, Optional
 
@@ -19,20 +18,9 @@ class ModelConfig:
         self.file: Path = store.get_plugin_config_dir() / "config.json"
         self.default_model: str = config.get_enable_models()[0]
         self.enable_md_to_pic: bool = config.md_to_pic
-        if tts_config.enable_tts_models:
-            self.available_tts_models: list[str] = asyncio.get_event_loop().run_until_complete(
-                tts_config.get_available_tts()
-            )
-            if not self.available_tts_models:
-                tts_logger("WARNING", "未读取到任何可用TTS模型")
-            else:
-                tts_logger("DEBUG", f"load deepseek tts model: {self.available_tts_models}")
-        else:
-            self.available_tts_models = []
-        if self.available_tts_models:
-            self.default_tts_model = self.available_tts_models[0]
-        else:
-            self.default_tts_model = None
+        self.tts_model_dict: dict[str, list[str]] = {}
+        self.available_tts_models: list[str] = []
+        self.default_tts_model: Optional[str] = None
 
         self.load()
 
@@ -45,9 +33,13 @@ class ModelConfig:
         with open(self.file, encoding="utf-8") as f:
             data = json.load(f)
             self.default_model = data.get("default_model", self.default_model)
-            if tts_config.enable_tts_models:
-                self.default_tts_model = data.get("default_tts_model")
             self.enable_md_to_pic = data.get("enable_md_to_pic", self.enable_md_to_pic)
+            self.default_tts_model = data.get("default_tts_model")
+            if isinstance(data.get("available_tts_models"), dict):
+                self.tts_model_dict = data.get("available_tts_models")
+                self.available_tts_models = [
+                    f"{model}-{spk}" for model, speakers in self.tts_model_dict.items() for spk in speakers
+                ] + (tts_config.get_enable_tts() if tts_config.enable_tts_models else [])
 
         enable_models = config.get_enable_models()
         if self.default_model not in enable_models:
@@ -67,8 +59,10 @@ class ModelConfig:
             "default_model": self.default_model,
             "enable_md_to_pic": self.enable_md_to_pic,
         }
-        if tts_config.enable_tts_models and self.default_tts_model in self.available_tts_models:
+        if self.default_tts_model in self.available_tts_models:
             config_data["default_tts_model"] = self.default_tts_model
+        if self.available_tts_models:
+            config_data["available_tts_models"] = self.tts_model_dict
         with open(self.file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, ensure_ascii=False, indent=2)
         self.load()
@@ -276,18 +270,16 @@ class ScopedTTSConfig(BaseModel):
             return []
         return [model.name for model in self.enable_tts_models]
 
-    async def get_available_tts(self) -> list[str]:
+    async def get_available_tts(self) -> dict[str, list[str]]:
         from .apis import API
 
         try:
             tts_models = await API.get_tts_models()
-            preset_list = [f"{model.model}-{spk}" for model in tts_models for spk in model.speakers]
-            if not isinstance(self.enable_tts_models, bool):
-                preset_list += self.get_enable_tts()
+            preset_dict = {model.model: list(model.speakers) for model in tts_models}
         except RequestException as e:
-            preset_list = []
+            preset_dict = {}
             tts_logger("WARNING", f"获取 TTS 模型列表失败: {e}")
-        return preset_list
+        return preset_dict
 
     def get_tts_model(self, preset_name: str) -> CustomTTS:
         """Get TTS model config"""

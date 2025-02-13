@@ -2,7 +2,8 @@ from nonebot import get_driver
 from nonebot_plugin_alconna import command_manager
 from nonebot_plugin_localstore import get_plugin_cache_dir
 
-from .log import ds_logger
+from .log import ds_logger, tts_logger
+from .config import tts_config, model_config
 
 driver = get_driver()
 cach_dir = get_plugin_cache_dir() / "shortcut.db"
@@ -12,6 +13,17 @@ cach_dir = get_plugin_cache_dir() / "shortcut.db"
 async def _() -> None:
     command_manager.load_cache(cach_dir)
     ds_logger("DEBUG", "DeepSeek shortcuts cache loaded")
+    if tts_config.enable_tts_models:
+        if not model_config.available_tts_models:
+            available_models = await tts_config.get_available_tts()
+            model_config.available_tts_models = [
+                f"{model}-{spk}" for model, speakers in available_models.items() for spk in speakers
+            ]
+            model_config.tts_model_dict = available_models
+            model_config.save()
+            tts_logger("DEBUG", f"First load, querying available TTS models: {available_models}")
+        else:
+            tts_logger("DEBUG", f"load available tts models: {model_config.available_tts_models}")
 
 
 @driver.on_shutdown

@@ -12,9 +12,11 @@ from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage
 from nonebot.matcher import Matcher, current_event, current_matcher
 
 from .apis import API
+from .log import tts_logger
 from .schemas import Message
+from .exception import RequestException
 from .function_call.registry import registry
-from .config import CustomTTS, CustomModel, config, tts_config
+from .config import CustomTTS, CustomModel, config
 
 
 class DeepSeekHandler:
@@ -22,11 +24,13 @@ class DeepSeekHandler:
         self,
         model: CustomModel,
         is_to_pic: bool,
+        is_use_tts: bool,
         is_contextual: bool,
         tts_model: Optional[CustomTTS] = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
+        self.is_use_tts: bool = is_use_tts
         self.is_contextual: bool = is_contextual
         self.tts_model: Optional[CustomTTS] = tts_model
         self.event: Event = current_event.get()
@@ -175,11 +179,20 @@ class DeepSeekHandler:
     async def _send_response(self, message: Message) -> None:
         output = self._format_output(message)
         message.reasoning_content = None
-        if self.is_to_pic and callable(self.md_to_pic):
-            if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):
+        if self.is_use_tts and self.tts_model:
+            try:
+                unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
+                await unimsg.send()
+            except RequestException as e:
+                tts_logger("ERROR", f"TTS Response error: {e}, Use image or text instead")
+                unimsg = (
+                    UniMessage.image(raw=await self.md_to_pic(output))
+                    if self.is_to_pic and callable(self.md_to_pic)
+                    else UniMessage(output)
+                )
                 await unimsg.send(reply_to=self.message_id)
-        elif tts_config.enable_tts_models and self.tts_model:
-            unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
-            await unimsg.send()
+        elif self.is_to_pic and callable(self.md_to_pic):
+            unimsg = UniMessage.image(raw=await self.md_to_pic(output))
+            await unimsg.send(reply_to=self.message_id)
         else:
             await UniMessage(output).send(reply_to=self.message_id)

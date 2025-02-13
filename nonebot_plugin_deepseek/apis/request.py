@@ -102,17 +102,20 @@ class API:
         }
 
         tts_logger("DEBUG", f"使用模型 {model}，讲话人：{speaker}, 配置：{json}")
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{tts_config.base_url}/infer_single",
-                headers={**cls._headers},
-                json=json,
-                timeout=50,
-            )
-        tts_logger("DEBUG", f"Response: {response.text}")
-        if audio_url := response.json().get("audio_url"):
+        try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(audio_url)
-                return response.content
-        else:
-            raise RequestException("语音合成失败")
+                response = await client.post(
+                    f"{tts_config.base_url}/infer_single",
+                    headers={**cls._headers},
+                    json=json,
+                    timeout=50,
+                )
+            tts_logger("DEBUG", f"Response: {response.text}")
+            if audio_url := response.json().get("audio_url"):
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(audio_url)
+                    return response.content
+            else:
+                raise RequestException("语音合成失败")
+        except httpx.ConnectError as e:
+            raise RequestException(f"连接 TTS 服务器失败: {e}")
