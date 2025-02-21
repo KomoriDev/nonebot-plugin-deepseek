@@ -54,7 +54,8 @@ class DeepSeekHandler:
             await self._send_response(message)
 
     async def _handle_multi_round_conversion(self) -> None:
-        async for resp in self.waiter(default=False, timeout=config.context_timeout):
+        timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
+        async for resp in self.waiter(default=False, timeout=timeout):
             await self._process_waiter_response(resp)
 
             if resp == "rollback":
@@ -73,7 +74,12 @@ class DeepSeekHandler:
 
     def _setup_waiter(self) -> Waiter[Union[str, Literal[False]]]:
         permission = Permission(User.from_event(self.event, perm=self.matcher.permission))
-        waiter = Waiter(waits=["message"], handler=self._waiter_handler, matcher=self.matcher, permission=permission)
+        waiter = Waiter(
+            waits=["message"],
+            handler=self._waiter_handler,
+            matcher=self.matcher,
+            permission=permission,
+        )
         waiter.future.set_result("")
         return waiter
 
@@ -92,8 +98,14 @@ class DeepSeekHandler:
         return msg
 
     async def _process_waiter_response(self, resp: Union[bool, str]) -> None:
+        timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
+
         if resp == "" and not self.context:
-            _resp = await prompt("你想对 DeepSeek 说什么呢？", handler=self._prompt_handler, timeout=60)
+            _resp = await prompt(
+                "你想对 DeepSeek 说什么呢？",
+                handler=self._prompt_handler,
+                timeout=timeout,
+            )
             if _resp is None:
                 await UniMessage.text("等待超时").finish(reply_to=self.message_id)
             resp = self._waiter_handler(_resp, skip=True)
@@ -138,7 +150,13 @@ class DeepSeekHandler:
             self.context.pop()
             return False
 
-        self.context.append({"role": "tool", "tool_call_id": message.tool_calls[0].id, "content": result})
+        self.context.append(
+            {
+                "role": "tool",
+                "tool_call_id": message.tool_calls[0].id,
+                "content": result,
+            }
+        )
         return True
 
     async def _get_response_message(self) -> Optional[Message]:

@@ -26,7 +26,7 @@ class API:
         prompt = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
 
         json = {
-            "messages": [{"content": prompt, "role": "system"}] + message if prompt else message,
+            "messages": ([{"content": prompt, "role": "system"}] + message if prompt else message),
             "model": model,
             **model_config.to_dict(),
         }
@@ -56,12 +56,16 @@ class API:
 
 
 async def common_request(base_url: str, api_key: str, json: dict):
+    timeout_config = config.timeout
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
             json=json,
-            timeout=50,
+            timeout=(timeout_config if isinstance(timeout_config, int) else timeout_config.api_request),
         )
     if error := response.json().get("error"):
         raise RequestException(error["message"])
@@ -74,7 +78,10 @@ async def stream_request(base_url: str, api_key: str, json: dict):
         async with client.stream(
             "POST",
             f"{base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
             json=json,
         ) as response:
             ret_list: Optional[StreamChoiceList] = None
@@ -107,7 +114,9 @@ async def stream_request(base_url: str, api_key: str, json: dict):
             return ret_list.transform()
 
 
-def sse_middle(line: str) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
+def sse_middle(
+    line: str,
+) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
     """单行SSE数据解析"""
     line = line.strip("\r")
     if not line:

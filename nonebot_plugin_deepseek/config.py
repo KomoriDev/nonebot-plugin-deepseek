@@ -139,6 +139,13 @@ class CustomModel(BaseModel):
         )
 
 
+class TimeoutConfig(BaseModel):
+    api_request: int = Field(default=100)
+    """API request timeout (Not applicable for streaming)"""
+    user_input: int = Field(default=60)
+    """User input timeout"""
+
+
 class ScopedConfig(BaseModel):
     api_key: str = ""
     """Your API Key from deepseek"""
@@ -153,8 +160,8 @@ class ScopedConfig(BaseModel):
     """Text to Image"""
     enable_send_thinking: bool = False
     """Whether to send model thinking chain"""
-    context_timeout: int = Field(default=50, gt=50)
-    """Multi-round conversation timeout"""
+    timeout: Union[int, TimeoutConfig] = Field(default_factory=TimeoutConfig)
+    """Timeout"""
     stream: bool = False
     """Stream"""
 
