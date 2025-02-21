@@ -34,4 +34,7 @@ class ParseExtension(Extension):
     async def parse_wrapper(self, bot: Bot, state: T_State, event: Event, res: Arparma) -> None:
         if res.subcommands.get("model") and not res.subcommands["model"].options:
             res.subcommands["model"].options.setdefault("list", OptionResult())
+        elif res.subcommands.get("tts") and not res.subcommands["tts"].options:
+            res.subcommands["tts"].options.setdefault("list", OptionResult())
+
         return None

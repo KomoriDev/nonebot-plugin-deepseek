@@ -12,10 +12,11 @@ from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage
 from nonebot.matcher import Matcher, current_event, current_matcher
 
 from .apis import API
+from .log import tts_logger
 from .schemas import Message
-from .config import CustomModel, config
 from .exception import RequestException
 from .function_call.registry import registry
+from .config import CustomTTS, CustomModel, config
 
 
 class DeepSeekHandler:
@@ -23,12 +24,15 @@ class DeepSeekHandler:
         self,
         model: CustomModel,
         is_to_pic: bool,
+        is_use_tts: bool,
         is_contextual: bool,
+        tts_model: Optional[CustomTTS] = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
+        self.is_use_tts: bool = is_use_tts
         self.is_contextual: bool = is_contextual
-
+        self.tts_model: Optional[CustomTTS] = tts_model
         self.event: Event = current_event.get()
         self.matcher: Matcher = current_matcher.get()
         self.message_id: str = UniMessage.get_message_id(self.event)
@@ -165,10 +169,10 @@ class DeepSeekHandler:
 
         return content, thinking
 
-    def _format_output(self, message: Message) -> str:
+    def _format_output(self, message: Message, with_thinking: bool) -> str:
         content, thinking = self._extract_content_and_think(message)
 
-        if config.enable_send_thinking and content and thinking:
+        if with_thinking and content and thinking:
             return (
                 f"<blockquote><p>{thinking}</p></blockquote>{content}"
                 if self.is_to_pic
@@ -177,10 +181,24 @@ class DeepSeekHandler:
         return content
 
     async def _send_response(self, message: Message) -> None:
-        output = self._format_output(message)
+        output = self._format_output(message, config.enable_send_thinking)
         message.reasoning_content = None
-        if self.is_to_pic and callable(self.md_to_pic):
-            if unimsg := UniMessage.image(raw=await self.md_to_pic(output)):
+        if self.is_use_tts and self.tts_model:
+            try:
+                output = self._format_output(message, False)
+                unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
+                await unimsg.send()
+            except RequestException as e:
+                tts_logger("ERROR", f"TTS Response error: {e}, Use image or text instead")
+                output = self._format_output(message, config.enable_send_thinking)
+                unimsg = (
+                    UniMessage.image(raw=await self.md_to_pic(output))
+                    if self.is_to_pic and callable(self.md_to_pic)
+                    else UniMessage(output)
+                )
                 await unimsg.send(reply_to=self.message_id)
+        elif self.is_to_pic and callable(self.md_to_pic):
+            unimsg = UniMessage.image(raw=await self.md_to_pic(output))
+            await unimsg.send(reply_to=self.message_id)
         else:
             await UniMessage.text(output).send(reply_to=self.message_id)

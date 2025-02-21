@@ -24,7 +24,7 @@ from nonebot_plugin_alconna import (
     on_alconna,
 )
 
-from .config import Config, config, model_config
+from .config import Config, config, tts_config, model_config
 
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
@@ -188,16 +188,62 @@ async def _(
     await deepseek.finish(f"已{state_desc} Markdown 转图片功能")
 
 
+@deepseek.assign("tts.list")
+async def _():
+    if not tts_config.enable_tts_models:
+        await deepseek.finish("当前未启用TTS功能")
+    if model_config.tts_model_dict:
+        model_list = "".join(
+            f"{model}\n - "
+            + "|".join(f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else spk for spk in speakers)
+            + "\n"
+            for model, speakers in model_config.tts_model_dict.items()
+            if model_config.default_tts_model
+            and (default_model := tts_config.get_tts_model(model_config.default_tts_model))
+        )
+        custom_models = "\n".join(
+            f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
+            for model in tts_config.get_enable_tts()
+        )
+        custom_models_msg = f"\n自定义预设:\n{custom_models}"
+    else:
+        await deepseek.finish("当前未查找到可用模型")
+
+    message = f"支持的TTS模型列表: \n{model_list}"
+    if isinstance(tts_config.enable_tts_models, list):
+        message += custom_models_msg
+    await deepseek.finish(message)
+
+
+@deepseek.assign("tts.set")
+async def _(
+    is_superuser: bool = Depends(SuperUser()),
+    model: Query[str] = Query("tts.set.model"),
+):
+    if not tts_config.enable_tts_models:
+        await deepseek.finish("当前未启用TTS功能")
+    if not is_superuser:
+        await deepseek.finish("该指令仅超管可用")
+    model_config.default_tts_model = model.result
+    model_config.save()
+    await deepseek.finish(f"已设置默认TTS模型为：{model.result}")
+
+
 @deepseek.handle()
 async def _(
     content: Match[tuple[str, ...]],
     model_name: Query[str] = Query("use-model.model"),
+    use_tts: Query[bool] = Query("use-tts.value"),
     render_option: Query[bool] = Query("render.value"),
     context_option: Query[bool] = Query("with-context.value"),
 ) -> None:
+    tts_model = None
     if not model_name.available:
         model_name.result = model_config.default_model
+    if use_tts.available and tts_config.enable_tts_models and isinstance(model_config.default_tts_model, str):
+        tts_model = tts_config.get_tts_model(model_config.default_tts_model)
 
+    model = config.get_model_config(model_name.result)
     if not render_option.available:
         render_option.result = model_config.enable_md_to_pic
 
@@ -207,5 +253,7 @@ async def _(
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,
+        is_use_tts=use_tts.available,
         is_contextual=context_option.available,
+        tts_model=tts_model if use_tts.available and tts_config.enable_tts_models else None,
     ).handle(" ".join(content.result) if content.available else None)

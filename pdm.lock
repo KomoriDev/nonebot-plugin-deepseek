@@ -5,7 +5,7 @@
 groups = ["default", "adapters", "dev", "fastapi", "image", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:dd140e4dc3fdf69c807e44aeb6a2ef9e32c9116f29849f9ef8491308194b7160"
+content_hash = "sha256:59580fdc3b19b405d7f4b3619110bdf1eecfde322fd7996408cd148f28b3c4f3"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -210,6 +210,21 @@ files = [
     {file = "charset_normalizer-3.4.1-cp39-cp39-win_amd64.whl", hash = "sha256:49402233c892a461407c512a19435d1ce275543138294f7ef013f0b63d5d3765"},
     {file = "charset_normalizer-3.4.1-py3-none-any.whl", hash = "sha256:d98b1668f06378c6dbefec3b92299716b931cd4e6061f3c875a71ced1780ab85"},
     {file = "charset_normalizer-3.4.1.tar.gz", hash = "sha256:44251f18cd68a75b56585dd00dae26183e102cd5e0f9f1466e6df5da2ed64ea3"},
+]
+
+[[package]]
+name = "cli-lite"
+version = "0.10.2"
+requires_python = ">=3.8"
+summary = "A simple framework to build a cli tool, base on Alconna"
+dependencies = [
+    "arclet-alconna-tools>=0.7.9",
+    "arclet-alconna>=1.8.30",
+    "importlib-metadata>=3.6.0",
+]
+files = [
+    {file = "cli_lite-0.10.2-py3-none-any.whl", hash = "sha256:a4835512d13c82bd596c7dd343c0dcdfd7c18226d8092c05ae6726f3539b0887"},
+    {file = "cli_lite-0.10.2.tar.gz", hash = "sha256:2cb62cfa89c0eddf81328253fbe6994d7e57bb2aea91d10ceb378a61e03753d3"},
 ]
 
 [[package]]

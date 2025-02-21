@@ -16,7 +16,12 @@ dependencies = [
     "httpx[http2]>=0.28.1",
     "beautifulsoup4>=4.12.3",
     "nonebot-plugin-localstore>=0.7.3",
+    "cli-lite>=0.10.2",
 ]
+
+[project.entry-points.nb_scripts]
+deepseek = "nonebot_plugin_deepseek.cli.__main__:main"
+
 
 [project.urls]
 homepage = "https://github.com/KomoriDev/nonebot-plugin-deepseek"
