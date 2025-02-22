@@ -52,6 +52,19 @@ NoneBot DeepSeek 插件。接入 DeepSeek 模型，提供智能对话与问答�
 
 Wiki: 👉 [传送门](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki)
 
+> [!IMPORTANT]
+> **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～⭐️
+
+<img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=KomoriDev&repo=nonebot-plugin-deepseek" alt="starify" />
+
+<details>
+  <summary><kbd>Star History</kbd></summary>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=KomoriDev/nonebot-plugin-deepseek&theme=dark&type=Date" />
+    <img width="100%" src="https://star-history.com/#KomoriDev/nonebot-plugin-deepseek&Date" />
+  </picture>
+</details>
+
 ## 💿 安装
 
 以下提到的方法任选 **其一** 即可
@@ -102,6 +115,7 @@ plugins = ["nonebot_plugin_deepseek"]
 |   deepseek__enable_models    | 否 |[{ "name": "deepseek-chat" }, { "name": "deepseek-reasoner" }]|启用的模型 [配置说明](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki/%E9%85%8D%E7%BD%AE#enable_models-%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)|
 |       deepseek__prompt       | 否 |                              无                              |                模型预设                |
 |       deepseek__stream       | 否 |                             False                            |            是否启用流式传输            |
+|       deepseek__timeout      | 否 |            {"api_request": 100, "user_input": 60}            |                超时设定                |
 |     deepseek__md_to_pic      | 否 |                             False                            |        是否启用 Markdown 转图片        |
 |deepseek__enable_send_thinking| 否 |                             False                            |             是否发送思维链             |
 

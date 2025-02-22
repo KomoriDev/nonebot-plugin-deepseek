@@ -17,9 +17,9 @@ class CleanDocExtension(Extension):
     def id(self) -> str:
         return "CleanDoc"
 
-    async def send_wrapper(self, bot: Bot, event: Event, send: Union[str, Message, UniMessage]) -> str:
-        plain_text = send.extract_plain_text() if isinstance(send, (Message, UniMessage)) else send
-        return inspect.cleandoc(plain_text)
+    async def send_wrapper(self, bot: Bot, event: Event, send: Union[str, Message, UniMessage]):
+        plain_text = send if isinstance(send, (Message, UniMessage)) else inspect.cleandoc(send)
+        return plain_text
 
 
 class ParseExtension(Extension):
