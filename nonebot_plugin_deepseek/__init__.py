@@ -97,6 +97,26 @@ deepseek = on_alconna(
             ),
             help_text="模型相关设置",
         ),
+        Subcommand(
+            "tts",
+            Option("-l|--list", help_text="支持的TTS模型列表"),
+            Option(
+                "--set-default",
+                Args[
+                    "model#模型名称",
+                    str,
+                    Field(
+                        completion=lambda: f"请输入TTS模型预设名，预期为："
+                        f"{model_config.available_tts_models[:10]}…… 其中之一\n"
+                        "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
+                    ),
+                ],
+                dest="set",
+                help_text="设置默认TTS模型",
+            ),
+            help_text="TTS模型相关设置",
+        ),
+        (Option("--use-tts", help_text="使用TTS回复")),
         namespace=alc_config.namespaces["deepseek"],
         meta=CommandMeta(
             description=__plugin_meta__.description,
@@ -115,6 +135,9 @@ deepseek.shortcut("深度思考", {"command": "deepseek --use-model deepseek-rea
 deepseek.shortcut("余额", {"command": "deepseek --balance", "fuzzy": False, "prefix": True})
 deepseek.shortcut("模型列表", {"command": "deepseek model --list", "fuzzy": False, "prefix": True})
 deepseek.shortcut("设置默认模型", {"command": "deepseek model --set-default", "fuzzy": True, "prefix": True})
+deepseek.shortcut("TTS模型列表", {"command": "deepseek tts --list", "fuzzy": False, "prefix": True})
+deepseek.shortcut("设置默认TTS模型", {"command": "deepseek tts --set-default", "fuzzy": True, "prefix": True})
+deepseek.shortcut("多轮语音对话", {"command": "deepseek --use-tts --with-context", "fuzzy": True, "prefix": True})
 
 
 @deepseek.assign("balance")
@@ -224,6 +247,12 @@ async def _(
         await deepseek.finish("当前未启用TTS功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
+    if model.result not in model_config.available_tts_models:
+        await deepseek.finish(
+            f"请输入TTS模型预设名，预期为："
+            f"{model_config.available_tts_models[:10]}…… 其中之一\n"
+            "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
+        )
     model_config.default_tts_model = model.result
     model_config.save()
     await deepseek.finish(f"已设置默认TTS模型为：{model.result}")
