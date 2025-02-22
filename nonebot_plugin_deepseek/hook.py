@@ -19,9 +19,9 @@ async def _() -> None:
             ]
             model_config.tts_model_dict = available_models
             model_config.save()
-            tts_logger("DEBUG", f"First load, querying available TTS models: {available_models}")
+            tts_logger("DEBUG", f"Loaded available TTS models: {available_models}")
         else:
-            tts_logger("DEBUG", f"load available tts models: {model_config.available_tts_models}")
+            tts_logger("DEBUG", f"Loaded available TTS models: {model_config.available_tts_models}")
         command = command_manager.get_command("deepseek::deepseek")
         command.add(
             Subcommand(
@@ -50,7 +50,6 @@ async def _() -> None:
         command.shortcut(
             "多轮语音对话", {"command": "deepseek --use-tts --with-context", "fuzzy": True, "prefix": True}
         )
-        tts_logger("DEBUG", "Loaded TTS Subcommands")
     command_manager.load_cache(cach_dir)
     ds_logger("DEBUG", "DeepSeek shortcuts cache loaded")
 
