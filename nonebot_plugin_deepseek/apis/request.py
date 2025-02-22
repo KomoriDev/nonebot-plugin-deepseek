@@ -30,7 +30,9 @@ class API:
             "model": model,
             **model_config.to_dict(),
         }
-        ds_logger("DEBUG", f"使用模型 {model}，配置：{json}")
+        ds_logger(
+            "DEBUG", f"使用模型 {f'{model} ({model_config.alias})' if model_config.alias else model}，配置：{json}"
+        )
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
         if model_dump(model_config, exclude_none=True).get("stream", config.stream):

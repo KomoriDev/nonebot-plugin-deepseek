@@ -73,6 +73,8 @@ class CustomModel(BaseModel):
     """Model Name"""
     base_url: str = "https://api.deepseek.com"
     """Custom base URL for this model (optional)"""
+    alias: Optional[str] = None
+    """Model alias name"""
     api_key: Optional[str] = None
     """Custom API Key for the model (optional)"""
     prompt: Optional[str] = None
@@ -159,7 +161,7 @@ class CustomModel(BaseModel):
 
     def to_dict(self):
         return model_dump(
-            self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url", "api_key", "prompt"}
+            self, exclude_unset=True, exclude_none=True, exclude={"name", "base_url", "alias", "api_key", "prompt"}
         )
 
 
@@ -242,7 +244,7 @@ class ScopedConfig(BaseModel):
     """Stream"""
 
     def get_enable_models(self) -> list[str]:
-        return [model.name for model in self.enable_models]
+        return [model.alias if model.alias else model.name for model in self.enable_models]
 
     def get_model_url(self, model_name: str) -> str:
         """Get the base_url corresponding to the model"""
@@ -254,7 +256,7 @@ class ScopedConfig(BaseModel):
     def get_model_config(self, model_name: str) -> CustomModel:
         """Get model config"""
         for model in self.enable_models:
-            if model.name == model_name:
+            if model.name == model_name or model.alias == model_name:
                 return model
         raise ValueError(f"Model {model_name} not enabled")
 
