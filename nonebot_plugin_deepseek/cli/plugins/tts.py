@@ -19,8 +19,8 @@ class TTSUpdate(BasePlugin):
     def init(self) -> Union[Alconna, str]:
         return Alconna(
             "tts",
-            Subcommand("update", help_text="更新TTS模型列表"),
-            meta=CommandMeta("DeepSeekTTS 相关指令"),
+            Subcommand("update", help_text="更新 TTS 模型列表"),
+            meta=CommandMeta("DeepSeek TTS 相关指令"),
             formatter_type=RichConsoleFormatter,
         )
 
@@ -36,7 +36,7 @@ class TTSUpdate(BasePlugin):
                 ]
                 model_config.tts_model_dict = available_models
                 model_config.save()
-                tts_logger("DEBUG", f"update available TTS models: {available_models}")
+                tts_logger("SUCCESS", f"Update available TTS models: {available_models}")
             return
         if result.find("tts"):
             tts_logger("INFO", f"\n{self.command.get_help()}")
