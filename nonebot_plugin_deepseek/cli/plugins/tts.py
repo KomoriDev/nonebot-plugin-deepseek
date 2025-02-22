@@ -7,6 +7,7 @@ from arclet.alconna import (
     Option,
     Alconna,
     Arparma,
+    Subcommand,
     CommandMeta,
 )
 
@@ -18,7 +19,7 @@ class TTSUpdate(BasePlugin):
     def init(self) -> Union[Alconna, str]:
         return Alconna(
             "tts",
-            Option("-uc|--update-cache", help_text="更新TTS模型列表"),
+            Subcommand("update", help_text="更新TTS模型列表"),
             meta=CommandMeta("DeepSeekTTS 相关指令"),
             formatter_type=RichConsoleFormatter,
         )
@@ -27,7 +28,7 @@ class TTSUpdate(BasePlugin):
         return PluginMetadata("TTSUpdate", "0.0.1", "更新TTS模型配置缓存", ["tts"], ["FrostN0v0"])
 
     def dispatch(self, result: Arparma) -> Union[bool, None]:
-        if result.find("tts.update-cache"):
+        if result.find("tts.update"):
             available_models = asyncio.run(tts_config.get_available_tts())
             if available_models:
                 model_config.available_tts_models = [
