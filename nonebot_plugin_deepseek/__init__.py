@@ -99,24 +99,24 @@ deepseek = on_alconna(
         ),
         Subcommand(
             "tts",
-            Option("-l|--list", help_text="支持的TTS模型列表"),
+            Option("-l|--list", help_text="支持的 TTS 模型列表"),
             Option(
                 "--set-default",
                 Args[
                     "model#模型名称",
                     str,
                     Field(
-                        completion=lambda: f"请输入TTS模型预设名，预期为："
+                        completion=lambda: f"请输入 TTS 模型预设名，预期为："
                         f"{model_config.available_tts_models[:10]}…… 其中之一\n"
-                        "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
+                        "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
                     ),
                 ],
                 dest="set",
-                help_text="设置默认TTS模型",
+                help_text="设置默认 TTS 模型",
             ),
-            help_text="TTS模型相关设置",
+            help_text="TTS 模型相关设置",
         ),
-        (Option("--use-tts", help_text="使用TTS回复")),
+        (Option("--use-tts", help_text="使用 TTS 回复")),
         namespace=alc_config.namespaces["deepseek"],
         meta=CommandMeta(
             description=__plugin_meta__.description,
@@ -214,7 +214,7 @@ async def _(
 @deepseek.assign("tts.list")
 async def _():
     if not tts_config.enable_tts_models:
-        await deepseek.finish("当前未启用TTS功能")
+        await deepseek.finish("当前未启用 TTS 功能")
     if model_config.tts_model_dict:
         model_list = "".join(
             f"{model}\n - "
@@ -232,7 +232,7 @@ async def _():
     else:
         await deepseek.finish("当前未查找到可用模型")
 
-    message = f"支持的TTS模型列表: \n{model_list}"
+    message = f"支持的 TTS 模型列表: \n{model_list}"
     if isinstance(tts_config.enable_tts_models, list):
         message += custom_models_msg
     await deepseek.finish(message)
@@ -244,18 +244,18 @@ async def _(
     model: Query[str] = Query("tts.set.model"),
 ):
     if not tts_config.enable_tts_models:
-        await deepseek.finish("当前未启用TTS功能")
+        await deepseek.finish("当前未启用 TTS 功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
     if model.result not in model_config.available_tts_models:
         await deepseek.finish(
-            f"请输入TTS模型预设名，预期为："
+            f"请输入 TTS 模型预设名，预期为："
             f"{model_config.available_tts_models[:10]}…… 其中之一\n"
-            "输入 `/deepseek tts -l` 查看所有TTS模型及角色"
+            "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
         )
     model_config.default_tts_model = model.result
     model_config.save()
-    await deepseek.finish(f"已设置默认TTS模型为：{model.result}")
+    await deepseek.finish(f"已设置默认 TTS 模型为：{model.result}")
 
 
 @deepseek.handle()

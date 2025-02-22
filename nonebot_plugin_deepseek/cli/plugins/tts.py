@@ -25,7 +25,7 @@ class TTSUpdate(BasePlugin):
         )
 
     def meta(self) -> PluginMetadata:
-        return PluginMetadata("TTSUpdate", "0.0.1", "更新TTS模型配置缓存", ["tts"], ["FrostN0v0"])
+        return PluginMetadata("TTSUpdate", "0.0.1", "更新 TTS 模型配置缓存", ["tts"], ["FrostN0v0"])
 
     def dispatch(self, result: Arparma) -> Union[bool, None]:
         if result.find("tts.update"):
