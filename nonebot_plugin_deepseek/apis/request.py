@@ -24,6 +24,7 @@ class API:
 
         api_key = model_config.api_key or config.api_key
         prompt = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
+        proxy = model_config.proxy
 
         json = {
             "messages": ([{"content": prompt, "role": "system"}] + message if prompt else message),
@@ -36,9 +37,9 @@ class API:
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
         if model_dump(model_config, exclude_none=True).get("stream", config.stream):
-            ret = await stream_request(model_config.base_url, api_key, json)
+            ret = await stream_request(model_config.base_url, api_key, json, proxy)
         else:
-            ret = await common_request(model_config.base_url, api_key, json)
+            ret = await common_request(model_config.base_url, api_key, json, proxy)
 
         return ret
 
@@ -120,9 +121,9 @@ class API:
             raise RequestException(f"连接 TTS 服务器失败: {e}")
 
 
-async def common_request(base_url: str, api_key: str, json: dict):
+async def common_request(base_url: str, api_key: str, json: dict, proxy: Optional[str] = None):
     timeout_config = config.timeout
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.post(
             f"{base_url}/chat/completions",
             headers={
@@ -137,9 +138,9 @@ async def common_request(base_url: str, api_key: str, json: dict):
     return ChatCompletions(**response.json())
 
 
-async def stream_request(base_url: str, api_key: str, json: dict):
+async def stream_request(base_url: str, api_key: str, json: dict, proxy: Optional[str] = None):
     json["stream"] = True
-    async with httpx.AsyncClient(http2=True, timeout=None) as client:
+    async with httpx.AsyncClient(http2=True, proxy=proxy, timeout=None) as client:
         async with client.stream(
             "POST",
             f"{base_url}/chat/completions",

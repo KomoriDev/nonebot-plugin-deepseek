@@ -79,6 +79,8 @@ class CustomModel(BaseModel):
     """Custom API Key for the model (optional)"""
     prompt: Optional[str] = None
     """Custom character preset for the model (optional)"""
+    proxy: Optional[str] = None
+    """A proxy URL where all the deepseek's traffic should be routed"""
     stream: Optional[bool] = Field(default=None)
     """Streaming"""
     max_tokens: int = Field(default=4090, gt=1, lt=8192)
