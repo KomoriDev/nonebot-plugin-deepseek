@@ -109,15 +109,15 @@ plugins = ["nonebot_plugin_deepseek"]
 > `enable_models` 为 [`CustomModel`](https://github.com/KomoriDev/nonebot-plugin-deepseek/blob/ee9f0b0f0568eedb3eb87423e6c1bf271787ab76/nonebot_plugin_deepseek/config.py#L34) 结构的字典，若无接入本地模型的需要则无需修改  
 > 若要接入本地模型，请参见：👉 [Wiki - 接入本地模型](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki/本地模型)  
 
-|           配置项             |必填|                            默认值                            |                  说明                  |
-|:---------------------------: |:--:|                 :---------------------------:                |             :-----------:             |
-|      deepseek__api_key       | 是 |                              无                              |                API Key                |
-|   deepseek__enable_models    | 否 |[{ "name": "deepseek-chat" }, { "name": "deepseek-reasoner" }]|启用的模型 [配置说明](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki/%E9%85%8D%E7%BD%AE#enable_models-%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)|
-|       deepseek__prompt       | 否 |                              无                              |                模型预设                |
-|       deepseek__stream       | 否 |                             False                            |            是否启用流式传输            |
-|       deepseek__timeout      | 否 |            {"api_request": 100, "user_input": 60}            |                超时设定                |
-|     deepseek__md_to_pic      | 否 |                             False                            |        是否启用 Markdown 转图片        |
-|deepseek__enable_send_thinking| 否 |                             False                            |             是否发送思维链             |
+|              配置项              | 必填  |                             默认值                             |                                                                          说明                                                                          |
+| :------------------------------: | :---: | :------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------: |
+|        deepseek__api_key         |  是   |                               无                               |                                                                        API Key                                                                         |
+|     deepseek__enable_models      |  否   | [{ "name": "deepseek-chat" }, { "name": "deepseek-reasoner" }] | 启用的模型 [配置说明](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki/%E9%85%8D%E7%BD%AE#enable_models-%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E) |
+|         deepseek__prompt         |  否   |                               无                               |                                                                        模型预设                                                                        |
+|         deepseek__stream         |  否   |                             False                              |                                                                    是否启用流式传输                                                                    |
+|        deepseek__timeout         |  否   |             {"api_request": 100, "user_input": 60}             |                                                                        超时设定                                                                        |
+|       deepseek__md_to_pic        |  否   |                             False                              |                                                                是否启用 Markdown 转图片                                                                |
+|  deepseek__enable_send_thinking  |  否   |                             False                              |                                                                     是否发送思维链                                                                     |
 
 ## 🎉 使用
 

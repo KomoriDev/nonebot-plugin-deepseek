@@ -1,19 +1,33 @@
 import json
 from pathlib import Path
-from typing import Any, Union, Literal, Optional
+from copy import deepcopy
+from importlib.util import find_spec
+from typing import Any, Union, Literal, Callable, ClassVar, Optional
 
-from nonebot import get_plugin_config
 from nonebot.compat import PYDANTIC_V2
 import nonebot_plugin_localstore as store
+from nonebot import require, get_plugin_config
 from pydantic import Field, BaseModel, ConfigDict
+from nonebot.matcher import current_bot, current_event
 
 from .log import ds_logger, tts_logger
 from .exception import RequestException
 from ._types import NOT_GIVEN, NotGivenOr
+from .placehold_prompt import compile_template
 from .compat import model_dump, model_validator
+
+if find_spec("nonebot_plugin_uninfo"):
+    require("nonebot_plugin_uninfo")
+    from nonebot_plugin_uninfo import get_session
+
+    uninfo_enable = True
+else:
+    uninfo_enable = False
 
 
 class ModelConfig:
+    ctx: ClassVar[dict[str, Any]] = {}
+
     def __init__(self) -> None:
         self.file: Path = store.get_plugin_config_dir() / "config.json"
         self.default_model: str = config.get_enable_models()[0]
@@ -22,6 +36,7 @@ class ModelConfig:
         self.available_tts_models: list[str] = []
         self.default_tts_model: Optional[str] = None
 
+        self.prompt_func: Optional[Callable[[dict[str, Any]], str]] = None
         self.load()
 
     def load(self):
@@ -65,7 +80,21 @@ class ModelConfig:
             config_data["available_tts_models"] = self.tts_model_dict
         with open(self.file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, ensure_ascii=False, indent=2)
+        self.prompt_func = None
         self.load()
+
+    def set_prompt_func(self, prompt: str):
+        self.prompt_func = compile_template(prompt)
+
+    def update_prompt(self):
+        if uninfo_enable is True:
+            self.ctx.update(session=get_session(current_bot.get(), current_event.get()))  # type: ignore
+        if self.prompt_func is not None:
+            return self.prompt_func(deepcopy(self.ctx))
+        raise ValueError("Prompt function not set")
+
+    def get_prompt(self) -> str:
+        return self.update_prompt()
 
 
 class CustomModel(BaseModel):
