@@ -5,7 +5,7 @@ from nonebot.typing import T_State
 from nonebot_plugin_alconna.uniseg import UniMessage
 from nonebot_plugin_alconna.extension import Extension
 from nonebot.internal.adapter import Bot, Event, Message
-from nonebot_plugin_alconna import Arparma, OptionResult
+from nonebot_plugin_alconna import Text, Alconna, Arparma, OptionResult
 
 
 class CleanDocExtension(Extension):
@@ -38,3 +38,7 @@ class ParseExtension(Extension):
             res.subcommands["tts"].options.setdefault("list", OptionResult())
 
         return None
+
+    async def receive_wrapper(self, bot: Bot, event: Event, command: Alconna, receive: UniMessage) -> UniMessage:
+        receive = receive.include(Text)
+        return receive
