@@ -118,7 +118,6 @@ plugins = ["nonebot_plugin_deepseek"]
 |        deepseek__timeout         |  否   |             {"api_request": 100, "user_input": 60}             |                                                                        超时设定                                                                        |
 |       deepseek__md_to_pic        |  否   |                             False                              |                                                                是否启用 Markdown 转图片                                                                |
 |  deepseek__enable_send_thinking  |  否   |                             False                              |                                                                     是否发送思维链                                                                     |
-| deepseek__enable_template_prompt |  否   |                             False                              |                                                                 是否启用模板提示词功能                                                                 |
 
 ## 🎉 使用
 

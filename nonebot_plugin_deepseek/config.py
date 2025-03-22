@@ -273,7 +273,6 @@ class ScopedConfig(BaseModel):
     """Timeout"""
     stream: bool = False
     """Stream"""
-    enable_template_prompt: bool = False
 
     def get_enable_models(self) -> list[str]:
         return [model.alias if model.alias else model.name for model in self.enable_models]

@@ -4,6 +4,7 @@ from typing import Union, Literal, Optional
 import httpx
 
 from ..compat import model_dump
+from ..config import uninfo_enable
 from ..config import config, tts_config
 from ..log import ds_logger, tts_logger
 
@@ -25,7 +26,7 @@ class API:
 
         api_key = model_config.api_key or config.api_key
         prompt: str = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
-        if config.enable_template_prompt:
+        if uninfo_enable:
             if global_config.prompt_func is None:
                 global_config.set_prompt_func(prompt)
             else:
