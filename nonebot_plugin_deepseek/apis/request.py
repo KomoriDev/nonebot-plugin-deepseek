@@ -4,7 +4,7 @@ from typing import Union, Literal, Optional
 import httpx
 
 from ..compat import model_dump
-from ..config import config, tts_config
+from ..config import config, tts_config,model_config as global_config
 from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
@@ -23,7 +23,12 @@ class API:
         model_config = config.get_model_config(model)
 
         api_key = model_config.api_key or config.api_key
-        prompt = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
+        prompt: str = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
+        if config.enable_template_prompt:
+            if global_config.prompt_func is None:
+                global_config.set_prompt_func(prompt)
+            else:
+                prompt = global_config.get_prompt()
         proxy = model_config.proxy
 
         json = {
