@@ -1,19 +1,19 @@
-from copy import deepcopy
-from importlib.util import find_spec
 import json
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Union, Literal, Optional
+from copy import deepcopy
+from importlib.util import find_spec
+from typing import Any, Union, Literal, Callable, ClassVar, Optional
 
-from nonebot import get_plugin_config, require
 from nonebot.compat import PYDANTIC_V2
-from nonebot.matcher import current_bot, current_event
 import nonebot_plugin_localstore as store
+from nonebot import require, get_plugin_config
 from pydantic import Field, BaseModel, ConfigDict
+from nonebot.matcher import current_bot, current_event
 
-from .placehold_prompt import compile_template
 from .log import ds_logger, tts_logger
 from .exception import RequestException
 from ._types import NOT_GIVEN, NotGivenOr
+from .placehold_prompt import compile_template
 from .compat import model_dump, model_validator
 
 if find_spec("nonebot_plugin_uninfo"):

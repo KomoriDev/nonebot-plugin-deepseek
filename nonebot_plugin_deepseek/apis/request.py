@@ -4,11 +4,12 @@ from typing import Union, Literal, Optional
 import httpx
 
 from ..compat import model_dump
-from ..config import config, tts_config,model_config as global_config
+from ..config import config, tts_config
 from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
 from ..exception import RequestException
+from ..config import model_config as global_config
 from ..schemas import Balance, TTSResponse, ChatCompletions, StreamChoiceList
 
 
