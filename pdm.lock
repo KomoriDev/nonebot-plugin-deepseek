@@ -2,10 +2,10 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "adapters", "dev", "fastapi", "image", "test"]
+groups = ["default", "adapters", "dev", "fastapi", "image", "test", "uninfo"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:59580fdc3b19b405d7f4b3619110bdf1eecfde322fd7996408cd148f28b3c4f3"
+content_hash = "sha256:343ab501f8ae87c141f4fe88f75c5687034a2017f1b80c41080b75269b3395cc"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -905,6 +905,20 @@ files = [
 ]
 
 [[package]]
+name = "nonebot-plugin-uninfo"
+version = "0.7.0"
+requires_python = ">=3.9"
+summary = "Universal Information Model for Nonebot2"
+dependencies = [
+    "importlib-metadata>=7.2.1",
+    "nonebot2>=2.4.2",
+]
+files = [
+    {file = "nonebot_plugin_uninfo-0.7.0-py3-none-any.whl", hash = "sha256:a61949303f890158dc13c9d353aa20fd5c386543b4950ab6fb635667339510b3"},
+    {file = "nonebot_plugin_uninfo-0.7.0.tar.gz", hash = "sha256:c0149053548e3905c76b5127f7cf6b2777834fae9e66af4558a4a8cc5e326ae5"},
+]
+
+[[package]]
 name = "nonebot-plugin-waiter"
 version = "0.8.1"
 requires_python = ">=3.9"
@@ -919,8 +933,8 @@ files = [
 
 [[package]]
 name = "nonebot2"
-version = "2.4.1"
-requires_python = ">=3.9,<4.0"
+version = "2.4.2"
+requires_python = "<4.0,>=3.9"
 summary = "An asynchronous python bot framework."
 dependencies = [
     "anyio<5.0.0,>=4.4.0",
@@ -934,24 +948,24 @@ dependencies = [
     "yarl<2.0.0,>=1.7.2",
 ]
 files = [
-    {file = "nonebot2-2.4.1-py3-none-any.whl", hash = "sha256:fec95f075efc89dbe9ce148618b413b02f46ba284200367749b035e794695111"},
-    {file = "nonebot2-2.4.1.tar.gz", hash = "sha256:8fea364318501ed79721403a8ecd76587bc884d58c356260f691a8bbda9b05e6"},
+    {file = "nonebot2-2.4.2-py3-none-any.whl", hash = "sha256:ed3e970cdb6c885fb23349b65a045c08cf3ac7f43e28564ae0c72d3671ecda74"},
+    {file = "nonebot2-2.4.2.tar.gz", hash = "sha256:cf72d5920503ff373ba1d7963f3ddf573db913eb504e3b68ee347efb937db27d"},
 ]
 
 [[package]]
 name = "nonebot2"
-version = "2.4.1"
+version = "2.4.2"
 extras = ["fastapi"]
-requires_python = ">=3.9,<4.0"
+requires_python = "<4.0,>=3.9"
 summary = "An asynchronous python bot framework."
 dependencies = [
     "fastapi<1.0.0,>=0.93.0",
-    "nonebot2==2.4.1",
+    "nonebot2==2.4.2",
     "uvicorn[standard]<1.0.0,>=0.20.0",
 ]
 files = [
-    {file = "nonebot2-2.4.1-py3-none-any.whl", hash = "sha256:fec95f075efc89dbe9ce148618b413b02f46ba284200367749b035e794695111"},
-    {file = "nonebot2-2.4.1.tar.gz", hash = "sha256:8fea364318501ed79721403a8ecd76587bc884d58c356260f691a8bbda9b05e6"},
+    {file = "nonebot2-2.4.2-py3-none-any.whl", hash = "sha256:ed3e970cdb6c885fb23349b65a045c08cf3ac7f43e28564ae0c72d3671ecda74"},
+    {file = "nonebot2-2.4.2.tar.gz", hash = "sha256:cf72d5920503ff373ba1d7963f3ddf573db913eb504e3b68ee347efb937db27d"},
 ]
 
 [[package]]
