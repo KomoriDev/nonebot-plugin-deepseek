@@ -1,6 +1,6 @@
+import re
 import ast
 from enum import Enum
-import re
 from typing import Callable
 
 
