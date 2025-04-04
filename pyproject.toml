@@ -22,7 +22,6 @@ dependencies = [
 [project.entry-points.nb_scripts]
 deepseek = "nonebot_plugin_deepseek.cli.__main__:main"
 
-
 [project.urls]
 homepage = "https://github.com/KomoriDev/nonebot-plugin-deepseek"
 repository = "https://github.com/KomoriDev/nonebot-plugin-deepseek"
@@ -30,12 +29,6 @@ repository = "https://github.com/KomoriDev/nonebot-plugin-deepseek"
 [project.optional-dependencies]
 image = [
     "nonebot-plugin-htmlrender>=0.5.1",
-]
-adapters = [
-    "nonebot-adapter-onebot>=2.4.6",
-]
-fastapi = [
-    "nonebot2[fastapi]>=2.4.1",
 ]
 test = [
     "pytest>=8.3.4",
@@ -46,16 +39,20 @@ uninfo = [
     "nonebot-plugin-uninfo>=0.7.0",
 ]
 
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 dev = [
     "ruff>=0.6.1",
     "isort>=5.13.2",
     "pre-commit>=3.7.1",
+    "nonebot-adapter-onebot>=2.4.6",
+    "nonebot2[fastapi,httpx]>=2.4.1",
+    "nonebot-adapter-telegram>=0.1.0b20",
 ]
 
 [tool.nonebot]
 adapters = [
-    { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" }
+    { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
+    { name = "Telegram", module_name = "nonebot.adapters.telegram" }
 ]
 plugins = ["nonebot_plugin_deepseek"]
 
