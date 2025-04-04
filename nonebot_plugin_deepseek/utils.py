@@ -8,8 +8,8 @@ import httpx
 from nonebot.adapters import Event
 from nonebot.permission import User, Permission
 from nonebot_plugin_waiter import Waiter, prompt
-from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage
 from nonebot.matcher import Matcher, current_event, current_matcher
+from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage, get_message_id
 
 from .apis import API
 from .log import tts_logger
@@ -35,7 +35,7 @@ class DeepSeekHandler:
         self.tts_model: Optional[CustomTTS] = tts_model
         self.event: Event = current_event.get()
         self.matcher: Matcher = current_matcher.get()
-        self.message_id: str = UniMessage.get_message_id(self.event)
+        self.message_id: str = get_message_id(self.event)
         self.waiter: Waiter[Union[str, Literal[False]]] = self._setup_waiter()
 
         self.context: list[dict[str, Any]] = []
@@ -90,7 +90,7 @@ class DeepSeekHandler:
     def _waiter_handler(self, msg: UniMsg, skip: bool = False) -> Union[str, Literal[False]]:
         text = msg.extract_plain_text()
         if not skip:
-            self.message_id = msg.get_message_id()
+            self.message_id = get_message_id()
         if text in ["结束", "取消", "done"]:
             return False
         if text in ["回滚", "rollback"]:
@@ -98,7 +98,7 @@ class DeepSeekHandler:
         return text
 
     def _prompt_handler(self, msg: UniMsg) -> UniMsg:
-        self.message_id = msg.get_message_id()
+        self.message_id = get_message_id()
         return msg
 
     async def _process_waiter_response(self, resp: Union[bool, str]) -> None:

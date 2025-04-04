@@ -5,7 +5,7 @@
 groups = ["default", "adapters", "dev", "fastapi", "image", "test", "uninfo"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:343ab501f8ae87c141f4fe88f75c5687034a2017f1b80c41080b75269b3395cc"
+content_hash = "sha256:faa0f4800d22dda6d802b4b5057b7aa02f5fb4dfe46e38dde2696bbab470bbf3"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -851,7 +851,7 @@ files = [
 
 [[package]]
 name = "nonebot-plugin-alconna"
-version = "0.56.2"
+version = "0.57.0"
 requires_python = ">=3.9"
 summary = "Alconna Adapter for Nonebot"
 dependencies = [
@@ -864,8 +864,8 @@ dependencies = [
     "tarina<0.7,>=0.6.8",
 ]
 files = [
-    {file = "nonebot_plugin_alconna-0.56.2-py3-none-any.whl", hash = "sha256:8ae64d023b82bd9196121b47d1f04a5cccb057eedd73a9bb8b6abcf9cbce5f30"},
-    {file = "nonebot_plugin_alconna-0.56.2.tar.gz", hash = "sha256:a7b521fb648f5b35febd3c120bd79cf71de3c44a805d06ed0257fbc61cb270e8"},
+    {file = "nonebot_plugin_alconna-0.57.0-py3-none-any.whl", hash = "sha256:6c4bcce1a9aa176244b4c011b19b1cea00269c4c6794cd4e90d8dd7990ec3ec9"},
+    {file = "nonebot_plugin_alconna-0.57.0.tar.gz", hash = "sha256:7a9a4bf373f3f6836611dbde1a0917b84441a534dd6f2b20dae3ba6fff142858"},
 ]
 
 [[package]]
