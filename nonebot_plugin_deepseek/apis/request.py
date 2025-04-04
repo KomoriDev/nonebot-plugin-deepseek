@@ -30,7 +30,7 @@ class API:
             if global_config.prompt_func is None:
                 global_config.set_prompt_func(prompt)
             else:
-                prompt = global_config.get_prompt()
+                prompt = await global_config.get_prompt()
         proxy = model_config.proxy
 
         json = {

@@ -86,15 +86,15 @@ class ModelConfig:
     def set_prompt_func(self, prompt: str):
         self.prompt_func = compile_template(prompt)
 
-    def update_prompt(self):
+    async def update_prompt(self):
         if uninfo_enable is True:
-            self.ctx.update(session=get_session(current_bot.get(), current_event.get()))  # type: ignore
+            self.ctx.update(session=await get_session(current_bot.get(), current_event.get()))  # type: ignore
         if self.prompt_func is not None:
             return self.prompt_func(deepcopy(self.ctx))
         raise ValueError("Prompt function not set")
 
-    def get_prompt(self) -> str:
-        return self.update_prompt()
+    async def get_prompt(self) -> str:
+        return await self.update_prompt()
 
 
 class CustomModel(BaseModel):
