@@ -30,8 +30,8 @@ class ModelConfig:
 
     def __init__(self) -> None:
         self.file: Path = store.get_plugin_config_dir() / "config.json"
-        self.default_model: str = config.get_enable_models()[0]
-        self.enable_md_to_pic: bool = config.md_to_pic
+        self.default_model: str = ds_config.get_enable_models()[0]
+        self.enable_md_to_pic: bool = ds_config.md_to_pic
         self.tts_model_dict: dict[str, list[str]] = {}
         self.available_tts_models: list[str] = []
         self.default_tts_model: Optional[str] = None
@@ -56,12 +56,12 @@ class ModelConfig:
                     f"{model}-{spk}" for model, speakers in self.tts_model_dict.items() for spk in speakers
                 ] + (tts_config.get_enable_tts() if tts_config.enable_tts_models else [])
 
-        enable_models = config.get_enable_models()
+        enable_models = ds_config.get_enable_models()
         if self.default_model not in enable_models:
             self.default_model = enable_models[0]
             self.save()
-        if self.enable_md_to_pic != config.md_to_pic:
-            self.enable_md_to_pic = config.md_to_pic
+        if self.enable_md_to_pic != ds_config.md_to_pic:
+            self.enable_md_to_pic = ds_config.md_to_pic
             self.save()
         if self.available_tts_models and self.default_tts_model not in self.available_tts_models:
             self.default_tts_model = self.available_tts_models[0]
@@ -331,13 +331,13 @@ class ScopedTTSConfig(BaseModel):
             for model in self.enable_tts_models:
                 if (
                     model.name == preset_name
-                    and f"{model.model_name}-{model.speaker_name}" in model_config.available_tts_models
+                    and f"{model.model_name}-{model.speaker_name}" in json_config.available_tts_models
                 ):
                     return model
         if "-" in preset_name:
             model_name = preset_name.split("-")[0]
             speaker_name = preset_name.split("-")[1]
-            if preset_name in model_config.available_tts_models:
+            if preset_name in json_config.available_tts_models:
                 return CustomTTS(name=preset_name, model_name=model_name, speaker_name=speaker_name)
         raise ValueError(f"TTS Model {preset_name} not valid")
 
@@ -349,7 +349,7 @@ class Config(BaseModel):
     """DeepSeek TTS Plugin Config"""
 
 
-config = (get_plugin_config(Config)).deepseek
+ds_config = (get_plugin_config(Config)).deepseek
 tts_config = (get_plugin_config(Config)).deepseek_tts
-model_config = ModelConfig()
-ds_logger("DEBUG", f"load deepseek model: {config.get_enable_models()}")
+json_config = ModelConfig()
+ds_logger("DEBUG", f"load deepseek model: {ds_config.get_enable_models()}")

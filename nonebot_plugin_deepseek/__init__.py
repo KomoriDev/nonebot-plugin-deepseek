@@ -24,7 +24,7 @@ from nonebot_plugin_alconna import (
     on_alconna,
 )
 
-from .config import Config, config, tts_config, model_config
+from .config import Config, ds_config, tts_config, json_config
 
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
@@ -66,8 +66,8 @@ deepseek = on_alconna(
             "--use-model",
             Args[
                 "model#模型名称",
-                config.get_enable_models(),
-                Field(completion=lambda: f"请输入模型名，预期为：{config.get_enable_models()} 其中之一"),
+                ds_config.get_enable_models(),
+                Field(completion=lambda: f"请输入模型名，预期为：{ds_config.get_enable_models()} 其中之一"),
             ],
             help_text="指定模型",
         ),
@@ -81,8 +81,8 @@ deepseek = on_alconna(
                 "--set-default",
                 Args[
                     "model#模型名称",
-                    config.get_enable_models(),
-                    Field(completion=lambda: f"请输入模型名，预期为：{config.get_enable_models()} 其中之一"),
+                    ds_config.get_enable_models(),
+                    Field(completion=lambda: f"请输入模型名，预期为：{ds_config.get_enable_models()} 其中之一"),
                 ],
                 dest="set",
                 help_text="设置默认模型",
@@ -108,7 +108,7 @@ deepseek = on_alconna(
                     str,
                     Field(
                         completion=lambda: f"请输入 TTS 模型预设名，预期为："
-                        f"{model_config.available_tts_models[:10]}…… 其中之一\n"
+                        f"{json_config.available_tts_models[:10]}…… 其中之一\n"
                         "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
                     ),
                 ],
@@ -146,7 +146,7 @@ async def _(is_superuser: bool = Depends(SuperUser())):
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
     try:
-        balances = await API.query_balance(model_config.default_model)
+        balances = await API.query_balance(json_config.default_model)
 
         await deepseek.finish(
             "".join(
@@ -168,8 +168,8 @@ async def _(is_superuser: bool = Depends(SuperUser())):
 @deepseek.assign("model.list")
 async def _():
     model_list = "\n".join(
-        f"- {model}（默认）" if model == model_config.default_model else f"- {model}"
-        for model in config.get_enable_models()
+        f"- {model}（默认）" if model == json_config.default_model else f"- {model}"
+        for model in ds_config.get_enable_models()
     )
     message = (
         f"支持的模型列表: \n{model_list}\n"
@@ -186,8 +186,8 @@ async def _(
 ):
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
-    model_config.default_model = model.result
-    model_config.save()
+    json_config.default_model = model.result
+    json_config.save()
     await deepseek.finish(f"已设置默认模型为：{model.result}")
 
 
@@ -203,12 +203,12 @@ async def _(
 
     if state.result == "enable" or state.result == "on":
         state_desc = "开启"
-        model_config.enable_md_to_pic = True
+        json_config.enable_md_to_pic = True
     else:
         state_desc = "关闭"
-        model_config.enable_md_to_pic = False
+        json_config.enable_md_to_pic = False
 
-    model_config.save()
+    json_config.save()
     await deepseek.finish(f"已{state_desc} Markdown 转图片功能")
 
 
@@ -216,17 +216,17 @@ async def _(
 async def _():
     if not tts_config.enable_tts_models:
         await deepseek.finish("当前未启用 TTS 功能")
-    if model_config.tts_model_dict:
+    if json_config.tts_model_dict:
         model_list = "".join(
             f"{model}\n - "
             + "|".join(f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else spk for spk in speakers)
             + "\n"
-            for model, speakers in model_config.tts_model_dict.items()
-            if model_config.default_tts_model
-            and (default_model := tts_config.get_tts_model(model_config.default_tts_model))
+            for model, speakers in json_config.tts_model_dict.items()
+            if json_config.default_tts_model
+            and (default_model := tts_config.get_tts_model(json_config.default_tts_model))
         )
         custom_models = "\n".join(
-            f"- {model}（默认）" if model == model_config.default_tts_model else f"- {model}"
+            f"- {model}（默认）" if model == json_config.default_tts_model else f"- {model}"
             for model in tts_config.get_enable_tts()
         )
         custom_models_msg = f"\n自定义预设:\n{custom_models}"
@@ -248,14 +248,14 @@ async def _(
         await deepseek.finish("当前未启用 TTS 功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
-    if model.result not in model_config.available_tts_models:
+    if model.result not in json_config.available_tts_models:
         await deepseek.finish(
             f"请输入 TTS 模型预设名，预期为："
-            f"{model_config.available_tts_models[:10]}…… 其中之一\n"
+            f"{json_config.available_tts_models[:10]}…… 其中之一\n"
             "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
         )
-    model_config.default_tts_model = model.result
-    model_config.save()
+    json_config.default_tts_model = model.result
+    json_config.save()
     await deepseek.finish(f"已设置默认 TTS 模型为：{model.result}")
 
 
@@ -269,17 +269,17 @@ async def _(
 ) -> None:
     tts_model = None
     if not model_name.available:
-        model_name.result = model_config.default_model
-    if use_tts.available and tts_config.enable_tts_models and isinstance(model_config.default_tts_model, str):
-        tts_model = tts_config.get_tts_model(model_config.default_tts_model)
+        model_name.result = json_config.default_model
+    if use_tts.available and tts_config.enable_tts_models and isinstance(json_config.default_tts_model, str):
+        tts_model = tts_config.get_tts_model(json_config.default_tts_model)
 
-    model = config.get_model_config(model_name.result)
+    model = ds_config.get_model_config(model_name.result)
     if not render_option.available:
-        render_option.result = model_config.enable_md_to_pic
+        render_option.result = json_config.enable_md_to_pic
 
     render_option.result = render_option.result if htmlrender_enable else False
 
-    model = config.get_model_config(model_name.result)
+    model = ds_config.get_model_config(model_name.result)
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,

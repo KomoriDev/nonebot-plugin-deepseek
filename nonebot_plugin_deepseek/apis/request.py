@@ -4,13 +4,11 @@ from typing import Union, Literal, Optional
 import httpx
 
 from ..compat import model_dump
-from ..config import uninfo_enable
-from ..config import config, tts_config
-from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
+from ..log import ds_logger, tts_logger
 from ..exception import RequestException
-from ..config import model_config as global_config
+from ..config import ds_config, tts_config, json_config, uninfo_enable
 from ..schemas import Balance, TTSResponse, ChatCompletions, StreamChoiceList
 
 
@@ -22,15 +20,15 @@ class API:
     @classmethod
     async def chat(cls, message: list[dict[str, str]], model: str = "deepseek-chat") -> ChatCompletions:
         """普通对话"""
-        model_config = config.get_model_config(model)
+        model_config = ds_config.get_model_config(model)
 
-        api_key = model_config.api_key or config.api_key
-        prompt: str = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
+        api_key = model_config.api_key or ds_config.api_key
+        prompt: str = model_dump(model_config, exclude_none=True).get("prompt", ds_config.prompt)
         if uninfo_enable:
-            if global_config.prompt_func is None:
-                global_config.set_prompt_func(prompt)
+            if json_config.prompt_func is None:
+                json_config.set_prompt_func(prompt)
             else:
-                prompt = await global_config.get_prompt()
+                prompt = await json_config.get_prompt()
         proxy = model_config.proxy
 
         json = {
@@ -43,7 +41,7 @@ class API:
         )
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
-        if model_dump(model_config, exclude_none=True).get("stream", config.stream):
+        if model_dump(model_config, exclude_none=True).get("stream", ds_config.stream):
             ret = await stream_request(model_config.base_url, api_key, json, proxy)
         else:
             ret = await common_request(model_config.base_url, api_key, json, proxy)
@@ -52,8 +50,8 @@ class API:
 
     @classmethod
     async def query_balance(cls, model_name: str) -> Balance:
-        model_config = config.get_model_config(model_name)
-        api_key = model_config.api_key or config.api_key
+        model_config = ds_config.get_model_config(model_name)
+        api_key = model_config.api_key or ds_config.api_key
 
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -129,7 +127,7 @@ class API:
 
 
 async def common_request(base_url: str, api_key: str, json: dict, proxy: Optional[str] = None):
-    timeout_config = config.timeout
+    timeout_config = ds_config.timeout
     async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.post(
             f"{base_url}/chat/completions",

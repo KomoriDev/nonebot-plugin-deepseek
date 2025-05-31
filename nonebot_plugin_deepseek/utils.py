@@ -16,7 +16,7 @@ from .log import tts_logger
 from .schemas import Message
 from .exception import RequestException
 from .function_call.registry import registry
-from .config import CustomTTS, CustomModel, config
+from .config import CustomTTS, CustomModel, ds_config
 
 
 class DeepSeekHandler:
@@ -58,7 +58,7 @@ class DeepSeekHandler:
             await self._send_response(message)
 
     async def _handle_multi_round_conversion(self) -> None:
-        timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
+        timeout = ds_config.timeout if isinstance(ds_config.timeout, int) else ds_config.timeout.user_input
         async for resp in self.waiter(default=False, timeout=timeout):
             await self._process_waiter_response(resp)
 
@@ -102,7 +102,7 @@ class DeepSeekHandler:
         return msg
 
     async def _process_waiter_response(self, resp: Union[bool, str]) -> None:
-        timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
+        timeout = ds_config.timeout if isinstance(ds_config.timeout, int) else ds_config.timeout.user_input
 
         if resp == "" and not self.context:
             _resp = await prompt(
@@ -199,7 +199,7 @@ class DeepSeekHandler:
         return content
 
     async def _send_response(self, message: Message) -> None:
-        output = self._format_output(message, config.enable_send_thinking)
+        output = self._format_output(message, ds_config.enable_send_thinking)
         message.reasoning_content = None
         if self.is_use_tts and self.tts_model:
             try:
@@ -208,7 +208,7 @@ class DeepSeekHandler:
                 await unimsg.send()
             except RequestException as e:
                 tts_logger("ERROR", f"TTS Response error: {e}, Use image or text instead")
-                output = self._format_output(message, config.enable_send_thinking)
+                output = self._format_output(message, ds_config.enable_send_thinking)
                 unimsg = (
                     UniMessage.image(raw=await self.md_to_pic(output))
                     if self.is_to_pic and callable(self.md_to_pic)
