@@ -11,7 +11,7 @@ cach_dir = get_plugin_cache_dir() / "shortcut.db"
 
 @driver.on_startup
 async def _() -> None:
-    if tts_config.enable_tts_models:
+    if tts_config.enable_models:
         if not json_config.available_tts_models:
             available_models = await tts_config.get_available_tts()
             json_config.available_tts_models = [

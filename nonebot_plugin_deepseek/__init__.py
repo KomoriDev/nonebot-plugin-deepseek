@@ -214,7 +214,7 @@ async def _(
 
 @deepseek.assign("tts.list")
 async def _():
-    if not tts_config.enable_tts_models:
+    if not tts_config.enable_models:
         await deepseek.finish("当前未启用 TTS 功能")
     if json_config.tts_model_dict:
         model_list = "".join(
@@ -234,7 +234,7 @@ async def _():
         await deepseek.finish("当前未查找到可用模型")
 
     message = f"支持的 TTS 模型列表: \n{model_list}"
-    if isinstance(tts_config.enable_tts_models, list):
+    if isinstance(tts_config.enable_models, list):
         message += custom_models_msg
     await deepseek.finish(message)
 
@@ -244,7 +244,7 @@ async def _(
     is_superuser: bool = Depends(SuperUser()),
     model: Query[str] = Query("tts.set.model"),
 ):
-    if not tts_config.enable_tts_models:
+    if not tts_config.enable_models:
         await deepseek.finish("当前未启用 TTS 功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
@@ -270,7 +270,7 @@ async def _(
     tts_model = None
     if not model_name.available:
         model_name.result = json_config.default_model
-    if use_tts.available and tts_config.enable_tts_models and isinstance(json_config.default_tts_model, str):
+    if use_tts.available and tts_config.enable_models and isinstance(json_config.default_tts_model, str):
         tts_model = tts_config.get_tts_model(json_config.default_tts_model)
 
     model = ds_config.get_model_config(model_name.result)
@@ -284,5 +284,5 @@ async def _(
         model=model,
         is_to_pic=render_option.result,
         is_contextual=context_option.available,
-        tts_model=tts_model if use_tts.available and tts_config.enable_tts_models else None,
+        tts_model=tts_model if use_tts.available and tts_config.enable_models else None,
     ).handle(" ".join(content.result) if content.available else None)

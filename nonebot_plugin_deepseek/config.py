@@ -54,7 +54,7 @@ class ModelConfig:
                 self.tts_model_dict = data.get("available_tts_models")
                 self.available_tts_models = [
                     f"{model}-{spk}" for model, speakers in self.tts_model_dict.items() for spk in speakers
-                ] + (tts_config.get_enable_tts() if tts_config.enable_tts_models else [])
+                ] + (tts_config.get_enable_tts() if tts_config.enable_models else [])
 
         enable_models = ds_config.get_enable_models()
         if self.default_model not in enable_models:
@@ -293,7 +293,7 @@ class ScopedConfig(BaseModel):
 
 
 class ScopedTTSConfig(BaseModel):
-    enable_tts_models: Union[list[CustomTTS], bool] = False
+    enable_models: Union[list[CustomTTS], bool] = False
     """List of TTS models configurations"""
     base_url: str = ""
     """Your GPT-Sovits API Url """
@@ -310,9 +310,9 @@ class ScopedTTSConfig(BaseModel):
         return data
 
     def get_enable_tts(self) -> list[str]:
-        if isinstance(self.enable_tts_models, bool):
+        if isinstance(self.enable_models, bool):
             return []
-        return [model.name for model in self.enable_tts_models]
+        return [model.name for model in self.enable_models]
 
     async def get_available_tts(self) -> dict[str, list[str]]:
         from .apis import API
@@ -327,8 +327,8 @@ class ScopedTTSConfig(BaseModel):
 
     def get_tts_model(self, preset_name: str) -> CustomTTS:
         """Get TTS model config"""
-        if not isinstance(self.enable_tts_models, bool):
-            for model in self.enable_tts_models:
+        if not isinstance(self.enable_models, bool):
+            for model in self.enable_models:
                 if (
                     model.name == preset_name
                     and f"{model.model_name}-{model.speaker_name}" in json_config.available_tts_models
