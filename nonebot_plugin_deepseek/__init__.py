@@ -73,6 +73,7 @@ deepseek = on_alconna(
         ),
         Option("--with-context", help_text="启用多轮对话"),
         Option("-r|--render|--render-markdown", dest="render", help_text="渲染 Markdown 为图片"),
+        Option("--use-tts", help_text="使用 TTS 回复"),
         Subcommand("--balance", help_text="查看余额"),
         Subcommand(
             "model",
@@ -117,7 +118,6 @@ deepseek = on_alconna(
             ),
             help_text="TTS 模型相关设置",
         ),
-        (Option("--use-tts", help_text="使用 TTS 回复")),
         namespace=alc_config.namespaces["deepseek"],
         meta=CommandMeta(
             description=__plugin_meta__.description,
@@ -279,7 +279,6 @@ async def _(
 
     render_option.result = render_option.result if htmlrender_enable else False
 
-    model = ds_config.get_model_config(model_name.result)
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,
