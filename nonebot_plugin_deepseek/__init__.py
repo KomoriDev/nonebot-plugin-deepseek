@@ -283,7 +283,6 @@ async def _(
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,
-        is_use_tts=use_tts.available,
         is_contextual=context_option.available,
         tts_model=tts_model if use_tts.available and tts_config.enable_tts_models else None,
     ).handle(" ".join(content.result) if content.available else None)

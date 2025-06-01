@@ -24,13 +24,11 @@ class DeepSeekHandler:
         self,
         model: CustomModel,
         is_to_pic: bool,
-        is_use_tts: bool,
         is_contextual: bool,
         tts_model: Optional[CustomTTS] = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
-        self.is_use_tts: bool = is_use_tts
         self.is_contextual: bool = is_contextual
         self.tts_model: Optional[CustomTTS] = tts_model
         self.event: Event = current_event.get()
@@ -201,7 +199,7 @@ class DeepSeekHandler:
     async def _send_response(self, message: Message) -> None:
         output = self._format_output(message, ds_config.enable_send_thinking)
         message.reasoning_content = None
-        if self.is_use_tts and self.tts_model:
+        if self.tts_model:
             try:
                 output = self._format_output(message, False)
                 unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
