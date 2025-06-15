@@ -9,7 +9,7 @@ from nonebot.adapters import Event
 from nonebot.permission import User, Permission
 from nonebot_plugin_waiter import Waiter, prompt
 from nonebot.matcher import Matcher, current_event, current_matcher
-from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage, get_message_id
+from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage, get_message_id, message_reaction
 
 from .apis import API
 from .log import tts_logger
@@ -45,6 +45,8 @@ class DeepSeekHandler:
     async def handle(self, content: Optional[str]) -> None:
         if content:
             self.context.append({"role": "user", "content": content})
+
+        await message_reaction("👀")
 
         if not self.is_contextual:
             await self._handle_single_conversion()
@@ -112,6 +114,8 @@ class DeepSeekHandler:
                 await UniMessage.text("等待超时").finish(reply_to=self.message_id)
             resp = self._waiter_handler(_resp, skip=True)
 
+        await message_reaction("👀", message_id=self.message_id)
+
         if resp is False:
             await UniMessage.text("已结束对话").finish(reply_to=self.message_id)
         elif resp == "rollback":
@@ -138,6 +142,7 @@ class DeepSeekHandler:
             )
         elif by_error and len(self.context) > 0:
             self.context.clear()
+            await message_reaction("❌", message_id=self.message_id)
             await UniMessage.text("Oops! 连接异常，请重新输入").send(reply_to=self.message_id)
         else:
             await UniMessage.text("无法回滚，当前对话记录为空").send(reply_to=self.message_id)
@@ -167,6 +172,7 @@ class DeepSeekHandler:
             return completion.choices[0].message
         except (httpx.ReadTimeout, httpx.RequestError):
             if not self.is_contextual:
+                await message_reaction("❌", message_id=self.message_id)
                 await UniMessage.text("Oops! 网络超时，请稍后重试").finish(reply_to=self.message_id)
             await self._handle_rollback(by_error=True)
         except RequestException as e:
