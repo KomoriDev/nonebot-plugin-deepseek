@@ -53,7 +53,7 @@ def test_custom_model():
             CustomModel(name="deepseek-reasoner", logprobs=True)
 
         # 设置无效字段时抛出警告
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match="不支持设置") as record:
             CustomModel(name="deepseek-reasoner", temperature=0.5, presence_penalty=1)
         assert any("不支持设置" in str(warn.message) for warn in record.list)
 
