@@ -95,7 +95,3 @@ typeCheckingMode = "standard"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-
-[build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
