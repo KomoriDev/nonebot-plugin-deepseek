@@ -34,7 +34,6 @@ else:
 
 from .apis import API
 from . import hook as hook
-from .version import __version__
 from .utils import DeepSeekHandler
 from .exception import RequestException
 from .extension import ParseExtension, CleanDocExtension
@@ -50,7 +49,7 @@ __plugin_meta__ = PluginMetadata(
     extra={
         "unique_name": "DeepSeek",
         "author": "Komorebi <mute231010@gmail.com>",
-        "version": __version__,
+        "version": "0.1.10",
     },
 )
 
