@@ -48,6 +48,9 @@ dev = [
     "nonebot2[fastapi,httpx]>=2.4.1",
     "nonebot-adapter-telegram>=0.1.0b20",
 ]
+yaml = [
+    "pydantic-yaml>=1.4.0",
+]
 
 [tool.nonebot]
 adapters = [

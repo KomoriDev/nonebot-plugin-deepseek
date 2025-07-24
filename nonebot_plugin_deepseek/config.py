@@ -24,6 +24,13 @@ if find_spec("nonebot_plugin_uninfo"):
 else:
     uninfo_enable = False
 
+if find_spec("pydantic_yaml"):
+    from pydantic_yaml import parse_yaml_file_as
+
+    yaml_enable = True
+else:
+    yaml_enable = False
+
 
 class ModelConfig:
     ctx: ClassVar[dict[str, Any]] = {}
@@ -347,6 +354,17 @@ class Config(BaseModel):
     """DeepSeek Plugin Config"""
     deepseek_tts: ScopedTTSConfig = Field(default_factory=ScopedTTSConfig)
     """DeepSeek TTS Plugin Config"""
+    deepseek_external_config: Optional[str] = None
+    """External YAML configuration file path"""
+
+    @model_validator(mode="after")
+    def load_external_config(self) -> "Config":
+        if self.deepseek_external_config and yaml_enable:
+            config_path = Path(self.deepseek_external_config)
+            ds_logger("DEBUG", f"Loading external configuration files: {config_path}")
+
+            self = parse_yaml_file_as(Config, config_path)  # type: ignore
+        return self
 
 
 ds_config = (get_plugin_config(Config)).deepseek
