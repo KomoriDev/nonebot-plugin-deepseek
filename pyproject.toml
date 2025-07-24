@@ -38,6 +38,13 @@ test = [
 uninfo = [
     "nonebot-plugin-uninfo>=0.7.0",
 ]
+yaml = [
+]
+full = [
+    "pydantic-yaml>=1.4.0",
+    "nonebot-plugin-uninfo>=0.7.0",
+    "nonebot-plugin-htmlrender>=0.5.1",
+]
 
 [dependency-groups]
 dev = [
@@ -47,9 +54,6 @@ dev = [
     "nonebot-adapter-onebot>=2.4.6",
     "nonebot2[fastapi,httpx]>=2.4.1",
     "nonebot-adapter-telegram>=0.1.0b20",
-]
-yaml = [
-    "pydantic-yaml>=1.4.0",
 ]
 
 [tool.nonebot]

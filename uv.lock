@@ -881,6 +881,12 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+full = [
+    { name = "nonebot-plugin-htmlrender" },
+    { name = "nonebot-plugin-uninfo" },
+    { name = "pydantic-yaml", version = "1.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pydantic-yaml", version = "1.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
 image = [
     { name = "nonebot-plugin-htmlrender" },
 ]
@@ -902,10 +908,6 @@ dev = [
     { name = "pre-commit" },
     { name = "ruff" },
 ]
-yaml = [
-    { name = "pydantic-yaml", version = "1.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pydantic-yaml", version = "1.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -913,15 +915,18 @@ requires-dist = [
     { name = "cli-lite", specifier = ">=0.10.2" },
     { name = "httpx", extras = ["http2"], specifier = ">=0.28.1" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.57.0" },
+    { name = "nonebot-plugin-htmlrender", marker = "extra == 'full'", specifier = ">=0.5.1" },
     { name = "nonebot-plugin-htmlrender", marker = "extra == 'image'", specifier = ">=0.5.1" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.3" },
+    { name = "nonebot-plugin-uninfo", marker = "extra == 'full'", specifier = ">=0.7.0" },
     { name = "nonebot-plugin-uninfo", marker = "extra == 'uninfo'", specifier = ">=0.7.0" },
     { name = "nonebot2", specifier = ">=2.4.1" },
     { name = "nonebug", marker = "extra == 'test'", specifier = ">=0.4.3" },
+    { name = "pydantic-yaml", marker = "extra == 'full'", specifier = ">=1.4.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.4" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.25.3" },
 ]
-provides-extras = ["image", "test", "uninfo"]
+provides-extras = ["image", "test", "uninfo", "yaml", "full"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -932,7 +937,6 @@ dev = [
     { name = "pre-commit", specifier = ">=3.7.1" },
     { name = "ruff", specifier = ">=0.6.1" },
 ]
-yaml = [{ name = "pydantic-yaml", specifier = ">=1.4.0" }]
 
 [[package]]
 name = "nonebot-plugin-htmlrender"
