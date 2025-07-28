@@ -1,3 +1,6 @@
+import itertools
+from pathlib import Path
+from importlib import import_module
 from importlib.util import find_spec
 
 from nonebot import require
@@ -20,6 +23,7 @@ from nonebot_plugin_alconna import (
     MultiVar,
     Namespace,
     Subcommand,
+    UniMessage,
     CommandMeta,
     on_alconna,
 )
@@ -29,6 +33,8 @@ from .config import Config, ds_config, tts_config, json_config
 if find_spec("nonebot_plugin_htmlrender"):
     require("nonebot_plugin_htmlrender")
     htmlrender_enable = True
+    text_to_pic = import_module("nonebot_plugin_htmlrender").text_to_pic
+
 else:
     htmlrender_enable = False
 
@@ -101,7 +107,7 @@ deepseek = on_alconna(
         ),
         Subcommand(
             "tts",
-            Option("-l|--list", help_text="支持的 TTS 模型列表"),
+            Option("-l|--list", Args["page?#页码", int], help_text="支持的 TTS 模型列表"),
             Option(
                 "--set-default",
                 Args[
@@ -109,7 +115,7 @@ deepseek = on_alconna(
                     str,
                     Field(
                         completion=lambda: f"请输入 TTS 模型预设名，预期为："
-                        f"{json_config.available_tts_models[:10]}…… 其中之一\n"
+                        f"{list(json_config.available_tts_models.keys())[:10]}…… 其中之一\n"
                         "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
                     ),
                 ],
@@ -213,29 +219,69 @@ async def _(
 
 
 @deepseek.assign("tts.list")
-async def _():
+async def _(
+    page: Query[int] = Query("tts.list.page"),
+):
     if not tts_config.enable_models:
         await deepseek.finish("当前未启用 TTS 功能")
-    if json_config.tts_model_dict:
-        model_list = "".join(
-            f"{model}\n - "
-            + "|".join(f"{spk}(默认)" if default_model.name == f"{model}-{spk}" else spk for spk in speakers)
-            + "\n"
-            for model, speakers in json_config.tts_model_dict.items()
+
+    def parse_model_dict(model_dict: dict[str, dict[str, list[str]]], start_index: int) -> str:
+        return "\n".join(
+            (f"{'✅️ ' if model_name == default_model.model_name else '⏹️'}{start_index + index + 1}.{model_name}")
+            for index, model_name in enumerate(model_dict.keys())
             if json_config.default_tts_model
             and (default_model := tts_config.get_tts_model(json_config.default_tts_model))
         )
-        custom_models = "\n".join(
-            f"- {model}（默认）" if model == json_config.default_tts_model else f"- {model}"
-            for model in tts_config.get_enable_tts()
+
+    if json_config.available_tts_models:
+        page_size = 200
+        page_num = page.result if page.available else 1
+        start_index = (page_num - 1) * page_size
+        page_model_dict = dict(
+            itertools.islice(json_config.available_tts_models.items(), start_index, start_index + page_size)
         )
-        custom_models_msg = f"\n自定义预设:\n{custom_models}"
+        if not page_model_dict:
+            await deepseek.finish(f"页码 {page_num} 超出范围，没有找到任何模型。")
+
+        model_list_msg = parse_model_dict(page_model_dict, start_index)
+        custom_models = (
+            "\n".join(
+                f"{'✅️ ' if model.name == json_config.default_tts_model else '⏹️'}{index + 1}.{model.name}"
+                for index, model in enumerate(tts_config.enable_models)
+            )
+            if isinstance(tts_config.enable_models, list)
+            else ""
+        )
     else:
         await deepseek.finish("当前未查找到可用模型")
 
-    message = f"支持的 TTS 模型列表: \n{model_list}"
-    if isinstance(tts_config.enable_models, list):
-        message += custom_models_msg
+    total_models = len(json_config.available_tts_models)
+    total_pages = (total_models + page_size - 1) // page_size
+
+    if page_num > total_pages or page_num < 1:
+        await deepseek.finish("请输入正确的页码")
+
+    header_msg = (
+        f"支持的 TTS 模型列表 \n(第 {page_num}/{total_pages} 页, 共 {total_models} 个):\n\n"
+        f"当前TTS模型:\n✅️ {json_config.default_tts_model}\n\n"
+    )
+    message = (
+        (f"自定义 TTS 模型预设:\n {custom_models}" if isinstance(tts_config.enable_models, list) else "")
+        + f"\n\n{header_msg}"
+        + model_list_msg
+    )
+    if htmlrender_enable:
+        custom_models_html = "".join(f"<div>{line}</div>" for line in custom_models.split("\n") if line)
+        header_html = (
+            f"<header class='custom-header'>"
+            f"<h2 class='header-title'>自定义 TTS 预设</h2>"
+            f"<div class='models-container'>{custom_models_html}</div></header>"
+        )
+        model_lines = "".join(f"<div>{line}</div>" for line in model_list_msg.split("\n") if line)
+        model_html = f"<h2 class='header-title'>{header_msg}</h2><div class='models-container'>{model_lines}</div>"
+        final_html = header_html + model_html
+        css_path = str(Path(__file__).parent / "resources/text.css")
+        await deepseek.finish(UniMessage.image(raw=await text_to_pic(text=final_html, css_path=css_path, width=1440)))
     await deepseek.finish(message)
 
 
@@ -248,10 +294,11 @@ async def _(
         await deepseek.finish("当前未启用 TTS 功能")
     if not is_superuser:
         await deepseek.finish("该指令仅超管可用")
-    if model.result not in json_config.available_tts_models:
+    available_tts_model_names = list(json_config.available_tts_models.keys()) + tts_config.get_enable_tts()
+    if model.result not in available_tts_model_names:
         await deepseek.finish(
             f"请输入 TTS 模型预设名，预期为："
-            f"{json_config.available_tts_models[:10]}…… 其中之一\n"
+            f"{list(json_config.available_tts_models.keys())[:10]}…… 其中之一\n"
             "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
         )
     json_config.default_tts_model = model.result

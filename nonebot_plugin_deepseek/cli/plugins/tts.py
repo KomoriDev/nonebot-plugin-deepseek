@@ -31,10 +31,7 @@ class TTSUpdate(BasePlugin):
         if result.find("tts.update"):
             available_models = asyncio.run(tts_config.get_available_tts())
             if available_models:
-                json_config.available_tts_models = [
-                    f"{model}-{spk}" for model, speakers in available_models.items() for spk in speakers
-                ]
-                json_config.tts_model_dict = available_models
+                json_config.available_tts_models = available_models
                 json_config.save()
                 tts_logger("SUCCESS", f"Update available TTS models: {available_models}")
             return
