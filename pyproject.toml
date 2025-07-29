@@ -39,6 +39,7 @@ uninfo = [
     "nonebot-plugin-uninfo>=0.7.0",
 ]
 yaml = [
+  "pydantic-yaml>=1.4.0",
 ]
 full = [
     "pydantic-yaml>=1.4.0",
