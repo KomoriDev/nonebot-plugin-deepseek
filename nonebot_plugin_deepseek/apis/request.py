@@ -70,7 +70,7 @@ class API:
                     f"{tts_config.base_url}/models",
                     headers={**cls._headers},
                     json={"version": tts_config.tts_version},
-                    timeout=30,
+                    timeout=tts_config.timeout,
                 )
             if response.status_code != 200:
                 raise RequestException(f"获取 TTS 模型列表失败，状态码: {response.status_code}")
@@ -92,6 +92,7 @@ class API:
             "app_key": tts_config.access_token,
             "access_token": tts_config.access_token,
             "version": tts_config.tts_version,
+            "dl_url": tts_config.dl_url,
             **model_config.to_dict(),
         }
 
@@ -102,12 +103,12 @@ class API:
                     f"{tts_config.base_url}/infer_single",
                     headers={**cls._headers, "Authorization": f"Bearer {tts_config.access_token}"},
                     json=json,
-                    timeout=50,
+                    timeout=tts_config.timeout,
                 )
             tts_logger("DEBUG", f"Response: {response.status_code} {response.text}")
             if audio_url := response.json().get("audio_url"):
                 async with httpx.AsyncClient() as client:
-                    response = await client.get(audio_url, timeout=50)
+                    response = await client.get(audio_url, timeout=tts_config.timeout)
                     return response.content
             else:
                 raise RequestException("语音合成失败")

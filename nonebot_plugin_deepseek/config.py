@@ -310,6 +310,16 @@ class ScopedTTSConfig(BaseModel):
     """Your GPT-Sovits API Access Token"""
     tts_version: str = "v4"
     """Your GPT-Sovits API Version"""
+    dl_url: str = ""
+    """audio download url"""
+    timeout: int = Field(default=60)
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_audio_dl_url(cls, data: dict) -> dict:
+        if not data.get("audio_dl_url") and data.get("base_url"):
+            data["audio_dl_url"] = data["base_url"]
+        return data
 
     def get_enable_tts(self) -> list[str]:
         if isinstance(self.enable_models, bool):

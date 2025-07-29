@@ -280,7 +280,7 @@ async def _(
         model_lines = "".join(f"<div>{line}</div>" for line in model_list_msg.split("\n") if line)
         model_html = f"<h2 class='header-title'>{header_msg}</h2><div class='models-container'>{model_lines}</div>"
         final_html = header_html + model_html
-        css_path = str(Path(__file__).parent / "resources/text.css")
+        css_path = str(Path(__file__).parent / "resources/tts_models.css")
         await deepseek.finish(UniMessage.image(raw=await text_to_pic(text=final_html, css_path=css_path, width=1440)))
     await deepseek.finish(message)
 
