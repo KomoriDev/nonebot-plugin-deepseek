@@ -9,7 +9,7 @@ from ..compat import model_dump
 from ..log import ds_logger, tts_logger
 from ..exception import RequestException
 from ..config import ds_config, tts_config, json_config, uninfo_enable
-from ..schemas import Balance, TTSResponse, ChatCompletions, StreamChoiceList
+from ..schemas import Balance, TTSModelInfo, ChatCompletions, StreamChoiceList
 
 
 class API:
@@ -63,66 +63,56 @@ class API:
         return Balance(**response.json())
 
     @classmethod
-    async def get_tts_models(cls) -> list[TTSResponse]:
+    async def get_tts_models(cls) -> list[TTSModelInfo]:
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(
+                response = await client.post(
                     f"{tts_config.base_url}/models",
                     headers={**cls._headers},
-                    timeout=30,
+                    json={"version": tts_config.tts_version},
+                    timeout=tts_config.timeout,
                 )
             if response.status_code != 200:
                 raise RequestException(f"获取 TTS 模型列表失败，状态码: {response.status_code}")
-            return [await TTSResponse.create(model=model) for model in response.json()]
+            return [
+                TTSModelInfo(model_name=key, language_emotions=value)
+                for key, value in response.json().get("models", {}).items()
+                if isinstance(value, dict)
+            ]
         except httpx.ConnectError as e:
             raise RequestException(f"连接 TTS 模型服务器失败: {e}")
-
-    @classmethod
-    async def get_tts_speakers(cls, model_name: str) -> list[str]:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{tts_config.base_url}/spks",
-                headers={**cls._headers},
-                json={"model": model_name},
-                timeout=30,
-            )
-        if speakers := response.json().get("speakers"):
-            return list(speakers.keys())
-        else:
-            raise RequestException("获取 TTS 模型讲话人列表失败")
 
     @classmethod
     async def text_to_speach(cls, text: str, model: str) -> bytes:
         model_config = tts_config.get_tts_model(model)
         model_name = model_config.model_name
-        speaker = model_config.speaker_name
         json = {
             "text": text,
             "model_name": model_name,
-            "speaker_name": speaker,
             "app_key": tts_config.access_token,
             "access_token": tts_config.access_token,
-            "audio_dl_url": tts_config.audio_dl_url,
+            "version": tts_config.tts_version,
+            "dl_url": tts_config.dl_url,
             **model_config.to_dict(),
         }
 
-        tts_logger("DEBUG", f"使用模型 {model}，讲话人：{speaker}, 配置：{json}")
+        tts_logger("DEBUG", f"使用模型 {model}，配置：{json}")
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{tts_config.base_url}/infer_single",
-                    headers={**cls._headers},
+                    headers={**cls._headers, "Authorization": f"Bearer {tts_config.access_token}"},
                     json=json,
-                    timeout=50,
+                    timeout=tts_config.timeout,
                 )
-            tts_logger("DEBUG", f"Response: {response.text}")
+            tts_logger("DEBUG", f"Response: {response.status_code} {response.text}")
             if audio_url := response.json().get("audio_url"):
                 async with httpx.AsyncClient() as client:
-                    response = await client.get(audio_url)
+                    response = await client.get(audio_url, timeout=tts_config.timeout)
                     return response.content
             else:
                 raise RequestException("语音合成失败")
-        except httpx.ConnectError as e:
+        except (httpx.ConnectError, httpx.ReadTimeout) as e:
             raise RequestException(f"连接 TTS 服务器失败: {e}")
 
 

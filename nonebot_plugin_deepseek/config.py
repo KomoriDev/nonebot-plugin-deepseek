@@ -39,8 +39,7 @@ class ModelConfig:
         self.file: Path = store.get_plugin_config_dir() / "config.json"
         self.default_model: str = ds_config.get_enable_models()[0]
         self.enable_md_to_pic: bool = ds_config.md_to_pic
-        self.tts_model_dict: dict[str, list[str]] = {}
-        self.available_tts_models: list[str] = []
+        self.available_tts_models: dict[str, dict[str, list[str]]] = {}
         self.default_tts_model: Optional[str] = None
 
         self.prompt_func: Optional[Callable[[dict[str, Any]], str]] = None
@@ -58,10 +57,7 @@ class ModelConfig:
             self.enable_md_to_pic = data.get("enable_md_to_pic", self.enable_md_to_pic)
             self.default_tts_model = data.get("default_tts_model")
             if isinstance(data.get("available_tts_models"), dict):
-                self.tts_model_dict = data.get("available_tts_models")
-                self.available_tts_models = [
-                    f"{model}-{spk}" for model, speakers in self.tts_model_dict.items() for spk in speakers
-                ] + (tts_config.get_enable_tts() if tts_config.enable_models else [])
+                self.available_tts_models = data.get("available_tts_models")
 
         enable_models = ds_config.get_enable_models()
         if self.default_model not in enable_models:
@@ -70,8 +66,10 @@ class ModelConfig:
         if self.enable_md_to_pic != ds_config.md_to_pic:
             self.enable_md_to_pic = ds_config.md_to_pic
             self.save()
-        if self.available_tts_models and self.default_tts_model not in self.available_tts_models:
-            self.default_tts_model = self.available_tts_models[0]
+        if self.available_tts_models and self.default_tts_model not in (
+            list(self.available_tts_models.keys()) + tts_config.get_enable_tts()
+        ):
+            self.default_tts_model = list(self.available_tts_models.keys())[0]
             self.save()
         if not self.available_tts_models and self.default_tts_model:
             self.save()
@@ -81,10 +79,10 @@ class ModelConfig:
             "default_model": self.default_model,
             "enable_md_to_pic": self.enable_md_to_pic,
         }
-        if self.default_tts_model in self.available_tts_models:
+        if self.default_tts_model in (list(self.available_tts_models.keys()) + tts_config.get_enable_tts()):
             config_data["default_tts_model"] = self.default_tts_model
         if self.available_tts_models:
-            config_data["available_tts_models"] = self.tts_model_dict
+            config_data["available_tts_models"] = self.available_tts_models
         with open(self.file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, ensure_ascii=False, indent=2)
         self.prompt_func = None
@@ -206,15 +204,15 @@ class CustomModel(BaseModel):
 class CustomTTS(BaseModel):
     name: str
     """TTS Preset Parameters Name"""
+    version: str = "v4"
+    """GPT-Sovits API Version"""
     model_name: str
     """TTS Model Name"""
-    speaker_name: str
-    """TTS Speaker Name"""
     prompt_text_lang: str = "中文"
     """language of the prompt text for the reference audio"""
-    emotion: str = "随机"
+    emotion: str = "默认"
     """Emotion"""
-    text_lang: str = "中文"
+    text_lang: str = "多语种混合"
     """language of the text to be synthesized"""
     top_k: int = Field(default=10, ge=1, le=100)
     """top k sampling"""
@@ -242,6 +240,10 @@ class CustomTTS(BaseModel):
     """repetition penalty for T2S model."""
     seed: int = -1
     """random seed for reproducibility."""
+    sample_steps: int = 16
+    """Number of steps sampled."""
+    if_sr: bool = False
+    """whether to use super-resolution model."""
 
     if PYDANTIC_V2:
         model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
@@ -306,8 +308,11 @@ class ScopedTTSConfig(BaseModel):
     """Your GPT-Sovits API Url """
     access_token: str = ""
     """Your GPT-Sovits API Access Token"""
-    audio_dl_url: str = ""
+    tts_version: str = "v4"
+    """Your GPT-Sovits API Version"""
+    dl_url: str = ""
     """audio download url"""
+    timeout: int = Field(default=60)
 
     @model_validator(mode="before")
     @classmethod
@@ -321,12 +326,12 @@ class ScopedTTSConfig(BaseModel):
             return []
         return [model.name for model in self.enable_models]
 
-    async def get_available_tts(self) -> dict[str, list[str]]:
+    async def get_available_tts(self) -> dict[str, dict[str, list[str]]]:
         from .apis import API
 
         try:
             tts_models = await API.get_tts_models()
-            preset_dict = {model.model: list(model.speakers) for model in tts_models}
+            preset_dict = {model.model_name: model.language_emotions for model in tts_models}
         except RequestException as e:
             preset_dict = {}
             tts_logger("WARNING", f"获取 TTS 模型列表失败: {e}")
@@ -336,16 +341,10 @@ class ScopedTTSConfig(BaseModel):
         """Get TTS model config"""
         if not isinstance(self.enable_models, bool):
             for model in self.enable_models:
-                if (
-                    model.name == preset_name
-                    and f"{model.model_name}-{model.speaker_name}" in json_config.available_tts_models
-                ):
+                if model.name == preset_name and f"{model.model_name}" in json_config.available_tts_models:
                     return model
-        if "-" in preset_name:
-            model_name = preset_name.split("-")[0]
-            speaker_name = preset_name.split("-")[1]
-            if preset_name in json_config.available_tts_models:
-                return CustomTTS(name=preset_name, model_name=model_name, speaker_name=speaker_name)
+        if preset_name in json_config.available_tts_models:
+            return CustomTTS(name=preset_name, model_name=preset_name)
         raise ValueError(f"TTS Model {preset_name} not valid")
 
 
