@@ -360,7 +360,6 @@ class Config(BaseModel):
     def load_external_config(self) -> "Config":
         if self.deepseek_external_config and yaml_enable:
             config_path = Path(self.deepseek_external_config)
-            ds_logger("DEBUG", f"Loading external configuration files: {config_path}")
 
             self = parse_yaml_file_as(Config, config_path)  # type: ignore
         return self
