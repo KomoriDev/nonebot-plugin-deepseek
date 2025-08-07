@@ -11,6 +11,7 @@ from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 require("nonebot_plugin_waiter")
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_localstore")
+from arclet.alconna import AllParam
 from arclet.alconna import config as alc_config
 from nonebot_plugin_alconna.builtins.extensions.reply import ReplyMergeExtension
 from nonebot_plugin_alconna import (
@@ -20,7 +21,6 @@ from nonebot_plugin_alconna import (
     Query,
     Option,
     Alconna,
-    MultiVar,
     Namespace,
     Subcommand,
     UniMessage,
@@ -67,7 +67,7 @@ alc_config.namespaces["deepseek"] = ns
 deepseek = on_alconna(
     Alconna(
         "deepseek",
-        Args["content?#内容", MultiVar("str")],
+        Args["content?#内容", AllParam(str)],
         Option(
             "--use-model",
             Args[
@@ -331,4 +331,4 @@ async def _(
         is_to_pic=render_option.result,
         is_contextual=context_option.available,
         tts_model=tts_model if use_tts.available and tts_config.enable_models else None,
-    ).handle(" ".join(content.result) if content.available else None)
+    ).handle(" ".join(str(content.result)) if content.available else None)
