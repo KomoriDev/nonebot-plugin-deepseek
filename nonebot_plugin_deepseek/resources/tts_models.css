@@ -1,0 +1,45 @@
+body {
+  padding: 2rem;
+  background-color: #f4f4f4;
+}
+
+.main-box {
+  width: 100%;
+}
+
+.text {
+  width: 100%;
+}
+
+.custom-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 1rem;
+}
+
+.models-container {
+  column-width: 320px;
+  column-gap: 1.5rem;
+  font-size: 16px;
+}
+
+.models-container > div {
+  padding: 0.1em 0.5em;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+
+.models-container > div:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.models-container > div:nth-child(even) {
+  background-color: #ffebcd;
+}

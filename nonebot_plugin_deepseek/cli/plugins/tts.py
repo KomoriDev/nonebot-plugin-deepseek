@@ -12,7 +12,7 @@ from arclet.alconna import (
 )
 
 from ...log import tts_logger
-from ...config import tts_config, model_config
+from ...config import tts_config, json_config
 
 
 class TTSUpdate(BasePlugin):
@@ -31,11 +31,8 @@ class TTSUpdate(BasePlugin):
         if result.find("tts.update"):
             available_models = asyncio.run(tts_config.get_available_tts())
             if available_models:
-                model_config.available_tts_models = [
-                    f"{model}-{spk}" for model, speakers in available_models.items() for spk in speakers
-                ]
-                model_config.tts_model_dict = available_models
-                model_config.save()
+                json_config.available_tts_models = available_models
+                json_config.save()
                 tts_logger("SUCCESS", f"Update available TTS models: {available_models}")
             return
         if result.find("tts"):

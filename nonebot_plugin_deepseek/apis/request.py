@@ -4,14 +4,12 @@ from typing import Union, Literal, Optional
 import httpx
 
 from ..compat import model_dump
-from ..config import uninfo_enable
-from ..config import config, tts_config
-from ..log import ds_logger, tts_logger
 
 # from ..function_call import registry
+from ..log import ds_logger, tts_logger
 from ..exception import RequestException
-from ..config import model_config as global_config
-from ..schemas import Balance, TTSResponse, ChatCompletions, StreamChoiceList
+from ..config import ds_config, tts_config, json_config, uninfo_enable
+from ..schemas import Balance, TTSModelInfo, ChatCompletions, StreamChoiceList
 
 
 class API:
@@ -22,15 +20,15 @@ class API:
     @classmethod
     async def chat(cls, message: list[dict[str, str]], model: str = "deepseek-chat") -> ChatCompletions:
         """普通对话"""
-        model_config = config.get_model_config(model)
+        model_config = ds_config.get_model_config(model)
 
-        api_key = model_config.api_key or config.api_key
-        prompt: str = model_dump(model_config, exclude_none=True).get("prompt", config.prompt)
+        api_key = model_config.api_key or ds_config.api_key
+        prompt: str = model_dump(model_config, exclude_none=True).get("prompt", ds_config.prompt)
         if uninfo_enable:
-            if global_config.prompt_func is None:
-                global_config.set_prompt_func(prompt)
+            if json_config.prompt_func is None:
+                json_config.set_prompt_func(prompt)
             else:
-                prompt = await global_config.get_prompt()
+                prompt = await json_config.get_prompt()
         proxy = model_config.proxy
 
         json = {
@@ -43,7 +41,7 @@ class API:
         )
         # if model == "deepseek-chat":
         #     json.update({"tools": registry.to_json()})
-        if model_dump(model_config, exclude_none=True).get("stream", config.stream):
+        if model_dump(model_config, exclude_none=True).get("stream", ds_config.stream):
             ret = await stream_request(model_config.base_url, api_key, json, proxy)
         else:
             ret = await common_request(model_config.base_url, api_key, json, proxy)
@@ -52,8 +50,8 @@ class API:
 
     @classmethod
     async def query_balance(cls, model_name: str) -> Balance:
-        model_config = config.get_model_config(model_name)
-        api_key = model_config.api_key or config.api_key
+        model_config = ds_config.get_model_config(model_name)
+        api_key = model_config.api_key or ds_config.api_key
 
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -65,71 +63,61 @@ class API:
         return Balance(**response.json())
 
     @classmethod
-    async def get_tts_models(cls) -> list[TTSResponse]:
+    async def get_tts_models(cls) -> list[TTSModelInfo]:
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(
+                response = await client.post(
                     f"{tts_config.base_url}/models",
                     headers={**cls._headers},
-                    timeout=30,
+                    json={"version": tts_config.tts_version},
+                    timeout=tts_config.timeout,
                 )
             if response.status_code != 200:
                 raise RequestException(f"获取 TTS 模型列表失败，状态码: {response.status_code}")
-            return [await TTSResponse.create(model=model) for model in response.json()]
+            return [
+                TTSModelInfo(model_name=key, language_emotions=value)
+                for key, value in response.json().get("models", {}).items()
+                if isinstance(value, dict)
+            ]
         except httpx.ConnectError as e:
             raise RequestException(f"连接 TTS 模型服务器失败: {e}")
-
-    @classmethod
-    async def get_tts_speakers(cls, model_name: str) -> list[str]:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{tts_config.base_url}/spks",
-                headers={**cls._headers},
-                json={"model": model_name},
-                timeout=30,
-            )
-        if speakers := response.json().get("speakers"):
-            return list(speakers.keys())
-        else:
-            raise RequestException("获取 TTS 模型讲话人列表失败")
 
     @classmethod
     async def text_to_speach(cls, text: str, model: str) -> bytes:
         model_config = tts_config.get_tts_model(model)
         model_name = model_config.model_name
-        speaker = model_config.speaker_name
         json = {
             "text": text,
             "model_name": model_name,
-            "speaker_name": speaker,
             "app_key": tts_config.access_token,
             "access_token": tts_config.access_token,
-            "audio_dl_url": tts_config.audio_dl_url,
+            "version": tts_config.tts_version,
+            "dl_url": tts_config.dl_url,
             **model_config.to_dict(),
         }
 
-        tts_logger("DEBUG", f"使用模型 {model}，讲话人：{speaker}, 配置：{json}")
+        tts_logger("DEBUG", f"使用模型 {model}，配置：{json}")
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{tts_config.base_url}/infer_single",
-                    headers={**cls._headers},
+                    headers={**cls._headers, "Authorization": f"Bearer {tts_config.access_token}"},
                     json=json,
-                    timeout=50,
+                    timeout=tts_config.timeout,
                 )
-            tts_logger("DEBUG", f"Response: {response.text}")
+            tts_logger("DEBUG", f"Response: {response.status_code} {response.text}")
             if audio_url := response.json().get("audio_url"):
                 async with httpx.AsyncClient() as client:
-                    response = await client.get(audio_url)
+                    response = await client.get(audio_url, timeout=tts_config.timeout)
                     return response.content
             else:
                 raise RequestException("语音合成失败")
-        except httpx.ConnectError as e:
+        except (httpx.ConnectError, httpx.ReadTimeout) as e:
             raise RequestException(f"连接 TTS 服务器失败: {e}")
 
 
 async def common_request(base_url: str, api_key: str, json: dict, proxy: Optional[str] = None):
-    timeout_config = config.timeout
+    timeout_config = ds_config.timeout
     async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.post(
             f"{base_url}/chat/completions",

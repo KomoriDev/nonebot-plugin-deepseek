@@ -17,7 +17,7 @@ from .log import tts_logger
 from .schemas import Message
 from .exception import RequestException
 from .function_call.registry import registry
-from .config import CustomTTS, CustomModel, config
+from .config import CustomTTS, CustomModel, ds_config
 
 
 class DeepSeekHandler:
@@ -25,13 +25,11 @@ class DeepSeekHandler:
         self,
         model: CustomModel,
         is_to_pic: bool,
-        is_use_tts: bool,
         is_contextual: bool,
         tts_model: Optional[CustomTTS] = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
-        self.is_use_tts: bool = is_use_tts
         self.is_contextual: bool = is_contextual
         self.tts_model: Optional[CustomTTS] = tts_model
         self.event: Event = current_event.get()
@@ -61,7 +59,7 @@ class DeepSeekHandler:
             await self._send_response(message)
 
     async def _handle_multi_round_conversion(self) -> None:
-        timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
+        timeout = ds_config.timeout if isinstance(ds_config.timeout, int) else ds_config.timeout.user_input
         async for resp in self.waiter(default=False, timeout=timeout):
             await self._process_waiter_response(resp)
 
@@ -119,7 +117,7 @@ class DeepSeekHandler:
         await message_reaction(emoji, message_id=self.message_id)
 
     async def _process_waiter_response(self, resp: Union[bool, str]) -> None:
-        timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
+        timeout = ds_config.timeout if isinstance(ds_config.timeout, int) else ds_config.timeout.user_input
 
         if resp == "" and not self.context:
             _resp = await prompt(
@@ -220,19 +218,19 @@ class DeepSeekHandler:
         return content
 
     async def _send_response(self, message: Message) -> None:
-        output = self._format_output(message, config.enable_send_thinking)
+        output = self._format_output(message, ds_config.enable_send_thinking)
         message.reasoning_content = None
 
         await self._message_reaction("done")
 
-        if self.is_use_tts and self.tts_model:
+        if self.tts_model:
             try:
                 output = self._format_output(message, False)
                 unimsg = UniMessage.audio(raw=await API.text_to_speach(output, self.tts_model.name))
                 await unimsg.send()
             except RequestException as e:
                 tts_logger("ERROR", f"TTS Response error: {e}, Use image or text instead")
-                output = self._format_output(message, config.enable_send_thinking)
+                output = self._format_output(message, ds_config.enable_send_thinking)
                 unimsg = (
                     UniMessage.image(raw=await self.md_to_pic(output))
                     if self.is_to_pic and callable(self.md_to_pic)

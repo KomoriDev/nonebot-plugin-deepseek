@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-deepseek"
-version = "0.1.9"
+version = "0.1.10"
 description = "NoneBot DeepSeek 插件。接入 DeepSeek 模型，提供智能对话与问答功能"
 authors = [
     { name = "KomoriDev ", email = "mute231010@gmail.com" },
@@ -38,6 +38,14 @@ test = [
 uninfo = [
     "nonebot-plugin-uninfo>=0.7.0",
 ]
+yaml = [
+  "pydantic-yaml>=1.4.0",
+]
+full = [
+    "pydantic-yaml>=1.4.0",
+    "nonebot-plugin-uninfo>=0.7.0",
+    "nonebot-plugin-htmlrender>=0.5.1",
+]
 
 [dependency-groups]
 dev = [
@@ -55,7 +63,6 @@ adapters = [
     { name = "Telegram", module_name = "nonebot.adapters.telegram" }
 ]
 plugins = ["nonebot_plugin_deepseek"]
-
 
 [tool.isort]
 profile = "black"
@@ -97,5 +104,9 @@ typeCheckingMode = "standard"
 asyncio_mode = "auto"
 
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "nonebot_plugin_deepseek"
+module-root = ""
