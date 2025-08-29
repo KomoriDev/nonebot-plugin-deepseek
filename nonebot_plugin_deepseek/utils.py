@@ -8,8 +8,9 @@ import httpx
 from nonebot.adapters import Event
 from nonebot.permission import User, Permission
 from nonebot_plugin_waiter import Waiter, prompt
+from nonebot_plugin_alconna import SupportAdapter
 from nonebot.matcher import Matcher, current_event, current_matcher
-from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage, get_message_id, message_reaction
+from nonebot_plugin_alconna.uniseg import UniMsg, UniMessage, get_target, get_message_id, message_reaction
 
 from .apis import API
 from .log import tts_logger
@@ -48,7 +49,7 @@ class DeepSeekHandler:
         if content:
             self.context.append({"role": "user", "content": content})
 
-        await message_reaction("👀")
+        await self._message_reaction("thinking")
 
         if not self.is_contextual:
             await self._handle_single_conversion()
@@ -103,6 +104,20 @@ class DeepSeekHandler:
         self.message_id = get_message_id()
         return msg
 
+    async def _message_reaction(self, status: Literal["fail", "thinking", "done"]) -> None:
+        emoji_map = {
+            "fail": ["10060", "❌"],
+            "thinking": ["424", "👀"],
+            "done": ["144", "🎉"],
+        }
+        target = get_target(self.event)
+        if target.adapter == SupportAdapter.onebot11:
+            emoji = emoji_map[status][0]
+        else:
+            emoji = emoji_map[status][1]
+
+        await message_reaction(emoji, message_id=self.message_id)
+
     async def _process_waiter_response(self, resp: Union[bool, str]) -> None:
         timeout = config.timeout if isinstance(config.timeout, int) else config.timeout.user_input
 
@@ -116,7 +131,7 @@ class DeepSeekHandler:
                 await UniMessage.text("等待超时").finish(reply_to=self.message_id)
             resp = self._waiter_handler(_resp, skip=True)
 
-        await message_reaction("👀", message_id=self.message_id)
+        await self._message_reaction("thinking")
 
         if resp is False:
             await UniMessage.text("已结束对话").finish(reply_to=self.message_id)
@@ -144,7 +159,7 @@ class DeepSeekHandler:
             )
         elif by_error and len(self.context) > 0:
             self.context.clear()
-            await message_reaction("❌", message_id=self.message_id)
+            await self._message_reaction("fail")
             await UniMessage.text("Oops! 连接异常，请重新输入").send(reply_to=self.message_id)
         else:
             await UniMessage.text("无法回滚，当前对话记录为空").send(reply_to=self.message_id)
@@ -174,7 +189,7 @@ class DeepSeekHandler:
             return completion.choices[0].message
         except (httpx.ReadTimeout, httpx.RequestError):
             if not self.is_contextual:
-                await message_reaction("❌", message_id=self.message_id)
+                await self._message_reaction("fail")
                 await UniMessage.text("Oops! 网络超时，请稍后重试").finish(reply_to=self.message_id)
             await self._handle_rollback(by_error=True)
         except RequestException as e:
@@ -207,6 +222,9 @@ class DeepSeekHandler:
     async def _send_response(self, message: Message) -> None:
         output = self._format_output(message, config.enable_send_thinking)
         message.reasoning_content = None
+
+        await self._message_reaction("done")
+
         if self.is_use_tts and self.tts_model:
             try:
                 output = self._format_output(message, False)
