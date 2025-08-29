@@ -3,6 +3,7 @@
   <a href="https://v2.nonebot.dev/store">
     <img src="./docs/NoneBotPlugin.svg" width="300" alt="logo">
   </a>
+
 </div>
 
 <div align="center">
@@ -10,6 +11,12 @@
 # NoneBot-Plugin-DeepSeek
 
 _✨ NoneBot DeepSeek 插件 ✨_
+
+<a href="https://github.com/fenxer/llm-things">
+  <img src="https://raw.githubusercontent.com/fenxer/llm-things/3eaaba79ddf48a784304493adfbaa614f410d6e6/images/deepseek.svg" width="200" alt="DeepSeek" />
+</a>
+
+<br/>
 
 <a href="">
   <img src="https://img.shields.io/pypi/v/nonebot-plugin-deepseek.svg" alt="pypi" />
@@ -46,7 +53,7 @@ _✨ NoneBot DeepSeek 插件 ✨_
 
 </div>
 
-## 📖 介绍
+## 📖 介绍 <img src="https://raw.githubusercontent.com/fenxer/llm-things/3eaaba79ddf48a784304493adfbaa614f410d6e6/images/human-coded.svg" width="100" alt="Human coded" />
 
 NoneBot DeepSeek 插件。接入 DeepSeek 模型，提供智能对话与问答功能
 
