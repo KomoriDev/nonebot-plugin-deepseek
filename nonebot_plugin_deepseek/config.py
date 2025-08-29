@@ -344,7 +344,8 @@ class ScopedTTSConfig(BaseModel):
                 if model.name == preset_name and f"{model.model_name}" in json_config.available_tts_models:
                     return model
         if preset_name in json_config.available_tts_models:
-            return CustomTTS(name=preset_name, model_name=preset_name)
+            prompt_text_lang = list(json_config.available_tts_models[preset_name].keys())[0]
+            return CustomTTS(name=preset_name, model_name=preset_name, prompt_text_lang=prompt_text_lang)
         raise ValueError(f"TTS Model {preset_name} not valid")
 
 
