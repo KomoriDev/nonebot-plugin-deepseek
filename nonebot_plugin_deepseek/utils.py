@@ -109,7 +109,10 @@ class DeepSeekHandler:
             "done": ["144", "🎉"],
         }
         target = get_target(self.event)
-        if target.adapter == SupportAdapter.onebot11:
+        if target.adapter in (
+            SupportAdapter.onebot11,
+            SupportAdapter.qq,
+        ):  # 仅在 OneBot11 和 QQ 适配器中使用,其他适配器自行决定就好
             emoji = emoji_map[status][0]
         else:
             emoji = emoji_map[status][1]
