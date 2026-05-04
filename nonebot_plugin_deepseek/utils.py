@@ -109,13 +109,16 @@ class DeepSeekHandler:
             "done": ["144", "🎉"],
         }
         target = get_target(self.event)
-        if target.adapter in (
+        if is_qq := target.adapter in (
             SupportAdapter.onebot11,
             SupportAdapter.qq,
-        ):  # 仅在 OneBot11 和 QQ 适配器中使用,其他适配器自行决定就好
+        ):
             emoji = emoji_map[status][0]
         else:
             emoji = emoji_map[status][1]
+
+        if is_qq and target.private:
+            return
 
         await message_reaction(emoji, message_id=self.message_id)
 
