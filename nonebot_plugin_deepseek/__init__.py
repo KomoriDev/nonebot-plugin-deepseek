@@ -1,9 +1,11 @@
 import itertools
 from pathlib import Path
+from typing import Optional
 from importlib import import_module
 from importlib.util import find_spec
 
 from nonebot import require
+from nonebot.adapters import Event
 from nonebot.params import Depends
 from nonebot.permission import SuperUser
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
@@ -44,6 +46,10 @@ from .version import __version__
 from .utils import DeepSeekHandler
 from .exception import RequestException
 from .extension import ParseExtension, CleanDocExtension
+from .group_context import (
+    get_group_session_id,
+    clear_context as clear_group_context,
+)
 
 __plugin_meta__ = PluginMetadata(
     name="DeepSeek",
@@ -78,6 +84,9 @@ deepseek = on_alconna(
             help_text="指定模型",
         ),
         Option("--with-context", help_text="启用多轮对话"),
+        Option("--with-group-context", help_text="启用群聊共享上下文"),
+        Option("--no-context", help_text="禁用上下文（单轮对话）"),
+        Option("--reset-group-context", help_text="重置当前群聊上下文"),
         Option("-r|--render|--render-markdown", dest="render", help_text="渲染 Markdown 为图片"),
         Option("--use-tts", help_text="使用 TTS 回复"),
         Subcommand("--balance", help_text="查看余额"),
@@ -308,12 +317,24 @@ async def _(
 
 @deepseek.handle()
 async def _(
+    event: Event,
     content: Match[tuple[str, ...]],
     model_name: Query[str] = Query("use-model.model"),
     use_tts: Query[bool] = Query("use-tts.value"),
     render_option: Query[bool] = Query("render.value"),
     context_option: Query[bool] = Query("with-context.value"),
+    with_group_context_option: Query[bool] = Query("with-group-context.value"),
+    no_context_option: Query[bool] = Query("no-context.value"),
+    reset_group_context_option: Query[bool] = Query("reset-group-context.value"),
 ) -> None:
+    if reset_group_context_option.available:
+        session_id = await get_group_session_id(event)
+        if session_id:
+            clear_group_context(session_id)
+            await deepseek.finish("已重置当前群聊上下文")
+        else:
+            await deepseek.finish("当前会话不支持群聊上下文重置")
+
     tts_model = None
     if not model_name.available:
         model_name.result = json_config.default_model
@@ -326,9 +347,24 @@ async def _(
 
     render_option.result = render_option.result if htmlrender_enable else False
 
+    # Determine whether to use group-shared context
+    is_group_context = False
+    group_session_id: Optional[str] = None
+    if not context_option.available:  # multi-round mode takes precedence
+        if no_context_option.available:
+            is_group_context = False
+        elif with_group_context_option.available:
+            group_session_id = await get_group_session_id(event)
+            is_group_context = group_session_id is not None
+        elif ds_config.enable_group_context:
+            group_session_id = await get_group_session_id(event)
+            is_group_context = group_session_id is not None
+
     await DeepSeekHandler(
         model=model,
         is_to_pic=render_option.result,
         is_contextual=context_option.available,
+        is_group_context=is_group_context,
+        group_session_id=group_session_id,
         tts_model=tts_model if use_tts.available and tts_config.enable_models else None,
     ).handle(" ".join(content.result) if content.available else None)

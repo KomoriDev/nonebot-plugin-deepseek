@@ -18,6 +18,7 @@ from .schemas import Message
 from .exception import RequestException
 from .function_call.registry import registry
 from .config import CustomTTS, CustomModel, ds_config
+from .group_context import get_user_name, get_context, set_context
 
 
 class DeepSeekHandler:
@@ -27,17 +28,23 @@ class DeepSeekHandler:
         is_to_pic: bool,
         is_contextual: bool,
         tts_model: Optional[CustomTTS] = None,
+        is_group_context: bool = False,
+        group_session_id: Optional[str] = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
         self.is_contextual: bool = is_contextual
         self.tts_model: Optional[CustomTTS] = tts_model
+        self.is_group_context: bool = is_group_context
+        self.group_session_id: Optional[str] = group_session_id
         self.event: Event = current_event.get()
         self.matcher: Matcher = current_matcher.get()
         self.message_id: str = get_message_id(self.event)
         self.waiter: Waiter[Union[str, Literal[False]]] = self._setup_waiter()
 
         self.context: list[dict[str, Any]] = []
+        if self.is_group_context and self.group_session_id:
+            self.context = get_context(self.group_session_id)
 
         self.md_to_pic: Union[Callable[..., Awaitable[bytes]], None] = (
             importlib.import_module("nonebot_plugin_htmlrender").md_to_pic if self.is_to_pic else None
@@ -45,7 +52,11 @@ class DeepSeekHandler:
 
     async def handle(self, content: Optional[str]) -> None:
         if content:
-            self.context.append({"role": "user", "content": content})
+            if self.is_group_context and ds_config.group_context_prefix:
+                user_name = await get_user_name(self.event)
+                self.context.append({"role": "user", "content": f"[{user_name}] {content}"})
+            else:
+                self.context.append({"role": "user", "content": content})
 
         await self._message_reaction("thinking")
 
@@ -54,9 +65,16 @@ class DeepSeekHandler:
         else:
             await self._handle_multi_round_conversion()
 
+    def _save_group_context(self) -> None:
+        if self.is_group_context and self.group_session_id:
+            set_context(self.group_session_id, self.context)
+
     async def _handle_single_conversion(self) -> None:
         if message := await self._get_response_message():
             await self._send_response(message)
+            if self.is_group_context and self.group_session_id:
+                self.context.append(asdict(message))
+                self._save_group_context()
 
     async def _handle_multi_round_conversion(self) -> None:
         timeout = ds_config.timeout if isinstance(ds_config.timeout, int) else ds_config.timeout.user_input
@@ -72,6 +90,7 @@ class DeepSeekHandler:
 
             await self._send_response(message)
             self.context.append(asdict(message))
+            self._save_group_context()
 
             if await self._handle_tool_calls(message):
                 self.waiter.future.set_result("")

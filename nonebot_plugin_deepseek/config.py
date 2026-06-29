@@ -282,6 +282,12 @@ class ScopedConfig(BaseModel):
     """Timeout"""
     stream: bool = False
     """Stream"""
+    enable_group_context: bool = False
+    """Whether to persist and share context in group chats across commands"""
+    max_group_history: int = Field(default=20, ge=1, le=100)
+    """Maximum number of messages to keep in group context"""
+    group_context_prefix: bool = True
+    """Whether to prefix user identity in group context messages"""
 
     def get_enable_models(self) -> list[str]:
         return [model.alias if model.alias else model.name for model in self.enable_models]
