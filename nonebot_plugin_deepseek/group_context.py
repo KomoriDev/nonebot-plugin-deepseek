@@ -1,5 +1,5 @@
-from importlib.util import find_spec
 from typing import Optional
+from importlib.util import find_spec
 
 from nonebot import require
 from nonebot.adapters import Event
@@ -22,7 +22,7 @@ async def get_group_session_id(event: Event) -> Optional[str]:
     """Return a session id for group/guild chats, or None for private chats."""
     if uninfo_enable:
         try:
-            from nonebot_plugin_uninfo import get_session, SceneType
+            from nonebot_plugin_uninfo import SceneType, get_session
 
             session = await get_session(current_bot.get(), event)
             if session is None:

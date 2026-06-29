@@ -48,8 +48,8 @@ from .exception import RequestException
 from .extension import ParseExtension, CleanDocExtension
 from .group_context import (
     get_group_session_id,
-    clear_context as clear_group_context,
 )
+from .group_context import clear_context as clear_group_context
 
 __plugin_meta__ = PluginMetadata(
     name="DeepSeek",

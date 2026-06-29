@@ -18,7 +18,7 @@ from .schemas import Message
 from .exception import RequestException
 from .function_call.registry import registry
 from .config import CustomTTS, CustomModel, ds_config
-from .group_context import get_user_name, get_context, set_context
+from .group_context import get_context, set_context, get_user_name
 
 
 class DeepSeekHandler:
