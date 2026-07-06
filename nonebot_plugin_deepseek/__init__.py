@@ -114,9 +114,11 @@ deepseek = on_alconna(
                     "model#模型名称",
                     str,
                     Field(
-                        completion=lambda: f"请输入 TTS 模型预设名，预期为："
-                        f"{list(json_config.available_tts_models.keys())[:10]}…… 其中之一\n"
-                        "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
+                        completion=lambda: (
+                            f"请输入 TTS 模型预设名，预期为："
+                            f"{list(json_config.available_tts_models.keys())[:10]}…… 其中之一\n"
+                            "输入 `/deepseek tts -l` 查看所有 TTS 模型及角色"
+                        )
                     ),
                 ],
                 dest="set",
