@@ -39,7 +39,7 @@ class Message:
     """该 completion 的内容"""
     reasoning_content: Optional[str] = None
     """
-    仅适用于 deepseek-reasoner 模型。内容为 assistant 消息中在最终答案之前的推理内容
+    仅适用于 deepseek-v4-pro 模型。内容为 assistant 消息中在最终答案之前的推理内容
     """
     tool_calls: Optional[list[ToolCalls]] = None
     """模型生成的 tool 调用"""

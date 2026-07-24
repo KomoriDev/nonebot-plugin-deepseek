@@ -18,7 +18,7 @@ class API:
     }
 
     @classmethod
-    async def chat(cls, message: list[dict[str, str]], model: str = "deepseek-chat") -> ChatCompletions:
+    async def chat(cls, message: list[dict[str, str]], model: str = "deepseek-v4-flash") -> ChatCompletions:
         """普通对话"""
         model_config = ds_config.get_model_config(model)
 
@@ -39,7 +39,7 @@ class API:
         ds_logger(
             "DEBUG", f"使用模型 {f'{model} ({model_config.alias})' if model_config.alias else model}，配置：{json}"
         )
-        # if model == "deepseek-chat":
+        # if model == "deepseek-v4-flash":
         #     json.update({"tools": registry.to_json()})
         if model_dump(model_config, exclude_none=True).get("stream", ds_config.stream):
             ret = await stream_request(model_config.base_url, api_key, json, proxy)

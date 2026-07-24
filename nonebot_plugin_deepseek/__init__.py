@@ -138,7 +138,7 @@ deepseek = on_alconna(
 )
 
 deepseek.shortcut("多轮对话", {"command": "deepseek --with-context", "fuzzy": True, "prefix": True})
-deepseek.shortcut("深度思考", {"command": "deepseek --use-model deepseek-reasoner", "fuzzy": True, "prefix": True})
+deepseek.shortcut("深度思考", {"command": "deepseek --use-model deepseek-v4-pro", "fuzzy": True, "prefix": True})
 deepseek.shortcut("余额", {"command": "deepseek --balance", "fuzzy": False, "prefix": True})
 deepseek.shortcut("模型列表", {"command": "deepseek model --list", "fuzzy": False, "prefix": True})
 deepseek.shortcut("设置默认模型", {"command": "deepseek model --set-default", "fuzzy": True, "prefix": True})
