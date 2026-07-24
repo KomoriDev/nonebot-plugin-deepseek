@@ -4,6 +4,7 @@ from typing import Literal
 import httpx
 
 from ..compat import model_dump
+from ..version import __version__
 
 # from ..function_call import registry
 from ..log import ds_logger, tts_logger
@@ -15,6 +16,7 @@ from ..schemas import Balance, TTSModelInfo, ChatCompletions, StreamChoiceList
 class API:
     _headers = {
         "Accept": "application/json",
+        "User-Agent": f"nonebot-plugin-deepseek/{__version__}",
     }
 
     @classmethod
@@ -108,7 +110,7 @@ class API:
             tts_logger("DEBUG", f"Response: {response.status_code} {response.text}")
             if audio_url := response.json().get("audio_url"):
                 async with httpx.AsyncClient() as client:
-                    response = await client.get(audio_url, timeout=tts_config.timeout)
+                    response = await client.get(audio_url, headers=cls._headers, timeout=tts_config.timeout)
                     return response.content
             else:
                 raise RequestException("语音合成失败")
@@ -122,6 +124,7 @@ async def common_request(base_url: str, api_key: str, json: dict, proxy: str | N
         response = await client.post(
             f"{base_url}/chat/completions",
             headers={
+                **API._headers,
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
@@ -140,6 +143,7 @@ async def stream_request(base_url: str, api_key: str, json: dict, proxy: str | N
             "POST",
             f"{base_url}/chat/completions",
             headers={
+                **API._headers,
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
