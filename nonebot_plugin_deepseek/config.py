@@ -120,8 +120,8 @@ class CustomModel(BaseModel):
     max_tokens: int = Field(default=4090, gt=1, lt=8192)
     """
     限制一次请求中模型生成 completion 的最大 token 数
-    - `deepseek-chat`: Integer between 1 and 8192. Default is 4090.
-    - `deepseek-reasoner`: Default is 4K, maximum is 8K.
+    - `deepseek-v4-flash`: Integer between 1 and 8192. Default is 4090.
+    - `deepseek-v4-pro`: Default is 4K, maximum is 8K.
     """
     frequency_penalty: Union[int, float] = Field(default=0, ge=-2, le=2)
     """
@@ -158,7 +158,7 @@ class CustomModel(BaseModel):
             name = data.get("name")
 
             if "max_tokens" not in data:
-                if name == "deepseek-reasoner":
+                if name == "deepseek-v4-pro":
                     data["max_tokens"] = 4000
                 else:
                     data["max_tokens"] = 4090
@@ -167,7 +167,7 @@ class CustomModel(BaseModel):
             if isinstance(stop, list) and len(stop) >= 16:
                 raise ValueError("字段 `stop` 最多允许设置 16 个字符")
 
-            if name == "deepseek-chat":
+            if name == "deepseek-v4-flash":
                 temperature = data.get("temperature")
                 top_p = data.get("top_p")
                 if temperature and top_p:
@@ -178,7 +178,7 @@ class CustomModel(BaseModel):
                 if top_logprobs and logprobs is False:
                     raise ValueError("指定 `top_logprobs` 参数时，`logprobs` 必须为 True")
 
-            elif name == "deepseek-reasoner":
+            elif name == "deepseek-v4-pro":
                 max_tokens = data.get("max_tokens")
                 if max_tokens and max_tokens > 8000:
                     ds_logger("WARNING", f"模型 {name} `max_tokens` 字段最大为 8000")
@@ -268,8 +268,8 @@ class ScopedConfig(BaseModel):
     api_key: str = ""
     """Your API Key from deepseek"""
     enable_models: list[CustomModel] = [
-        CustomModel(name="deepseek-chat"),
-        CustomModel(name="deepseek-reasoner"),
+        CustomModel(name="deepseek-v4-flash"),
+        CustomModel(name="deepseek-v4-pro"),
     ]
     """List of models configurations"""
     prompt: str = ""

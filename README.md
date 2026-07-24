@@ -119,7 +119,7 @@ plugins = ["nonebot_plugin_deepseek"]
 |              配置项              | 必填  |                             默认值                             |                                                                          说明                                                                          |
 | :------------------------------: | :---: | :------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------: |
 |        deepseek__api_key         |  是   |                               无                               |                                                                        API Key                                                                         |
-|     deepseek__enable_models      |  否   | [{ "name": "deepseek-chat" }, { "name": "deepseek-reasoner" }] | 启用的模型 [配置说明](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki/%E9%85%8D%E7%BD%AE#enable_models-%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E) |
+|     deepseek__enable_models      |  否   | [{ "name": "deepseek-v4-flash" }, { "name": "deepseek-v4-pro" }] | 启用的模型 [配置说明](https://github.com/KomoriDev/nonebot-plugin-deepseek/wiki/%E9%85%8D%E7%BD%AE#enable_models-%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E) |
 |         deepseek__prompt         |  否   |                               无                               |                                                                        模型预设                                                                        |
 |         deepseek__stream         |  否   |                             False                              |                                                                    是否启用流式传输                                                                    |
 |        deepseek__timeout         |  否   |             {"api_request": 100, "user_input": 60}             |                                                                        超时设定                                                                        |
@@ -167,7 +167,7 @@ deepseek --help
 ### 深度思考
 
 ```bash
-/deepseek [内容] --use-model deepseek-reasoner
+/deepseek [内容] --use-model deepseek-v4-pro
 ```
 
 快捷指令：`/深度思考 [内容]`
@@ -213,10 +213,10 @@ deepseek --help
 例子:
 
 ```bash
-user: /deepseek --shortcut /chat /deepseek --use-model deepseek-chat
+user: /deepseek --shortcut /chat /deepseek --use-model deepseek-v4-flash
 bot: deepseek::deepseek 的快捷指令: "/chat" 添加成功
 user: /chat
-bot: (使用模型 deepseek-chat)
+bot: (使用模型 deepseek-v4-flash)
 ```
 
 ## 📸 效果图

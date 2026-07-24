@@ -10,7 +10,7 @@ def pytest_configure(config: pytest.Config):
         "driver": "~fastapi",
         "log_level": "DEBUG",
         "command_start": {"/", ""},
-        "deepseek": {"api_key": "sk-xxx", "enable_models": [{"name": "deepseek-chat"}]},
+        "deepseek": {"api_key": "sk-xxx", "enable_models": [{"name": "deepseek-v4-flash"}]},
     }
 
 
