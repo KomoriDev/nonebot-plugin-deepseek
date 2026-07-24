@@ -1,26 +1,25 @@
+from typing import Literal, cast
 from dataclasses import dataclass
-from typing_extensions import TypeAlias
-from typing import Literal, Optional, cast
 
 from .usage import Usage
 from .message import Message
 from .logprobs import Logprobs
 
-FinishReasonType: TypeAlias = Literal["stop", "length", "content_filter", "tool_calls", "insufficient_system_resource"]
+type FinishReasonType = Literal["stop", "length", "content_filter", "tool_calls", "insufficient_system_resource"]
 
 
 class Delta:
-    content: Optional[str] = None
+    content: str | None = None
     "实际输出的内容"
-    reasoning_content: Optional[str] = None
+    reasoning_content: str | None = None
     "推理输出的内容"
     role: Literal["assistant"] = "assistant"
     "角色"
 
     def __init__(
         self,
-        content: Optional[str] = None,
-        reasoning_content: Optional[str] = None,
+        content: str | None = None,
+        reasoning_content: str | None = None,
         role: Literal["assistant"] = "assistant",
         **kwargs,
     ) -> None:
@@ -30,9 +29,9 @@ class Delta:
 
     def update(
         self,
-        content: Optional[str] = None,
-        reasoning_content: Optional[str] = None,
-        role: Optional[Literal["assistant"]] = None,
+        content: str | None = None,
+        reasoning_content: str | None = None,
+        role: Literal["assistant"] | None = None,
         **kwargs,
     ):
         if content:
@@ -50,13 +49,13 @@ class Delta:
 
 
 class StreamChoice:
-    finish_reason: Optional[FinishReasonType] = None
+    finish_reason: FinishReasonType | None = None
     """模型停止生成 token 的原因"""
     index: int
     """该 completion 在模型生成的 completion 的选择列表中的索引"""
     delta: Delta
     """流式返回的一个 completion 增量。"""
-    logprobs: Optional[Logprobs] = None
+    logprobs: Logprobs | None = None
     """该 choice 的对数概率信息"""
 
     def __init__(
@@ -64,8 +63,8 @@ class StreamChoice:
         index: int,
         delta: dict,
         *,
-        finish_reason: Optional[FinishReasonType] = None,
-        logprobs: Optional[dict] = None,
+        finish_reason: FinishReasonType | None = None,
+        logprobs: dict | None = None,
         **kwargs,
     ) -> None:
         self.index = index
@@ -96,9 +95,9 @@ class StreamChoiceList:
     """生成该 completion 的模型名"""
     object: Literal["chat.completion", "chat.completion.chunk"]
     """对象的类型, 其值为 `chat.completion`。流式传输时, 其值为 `chat.completion.chunk`"""
-    system_fingerprint: Optional[str] = None
+    system_fingerprint: str | None = None
     """该指纹代表模型运行的后端配置"""
-    usage: Optional[Usage] = None
+    usage: Usage | None = None
     """该对话补全请求的用量信息"""
 
     def __init__(
@@ -108,7 +107,7 @@ class StreamChoiceList:
         model: str,
         object: Literal["chat.completion", "chat.completion.chunk"],
         choices: list[dict],
-        system_fingerprint: Optional[str] = None,
+        system_fingerprint: str | None = None,
         usage=None,
         **kwargs,
     ) -> None:
@@ -179,7 +178,7 @@ class Choice:
     """该 completion 在模型生成的 completion 的选择列表中的索引"""
     message: Message
     """模型生成的 completion 消息"""
-    logprobs: Optional[Logprobs] = None
+    logprobs: Logprobs | None = None
     """该 choice 的对数概率信息"""
 
     def __post_init__(self) -> None:
@@ -203,7 +202,7 @@ class ChatCompletions:
     """对象的类型, 其值为 `chat.completion`。流式传输时, 其值为 `chat.completion.chunk`"""
     usage: Usage
     """该对话补全请求的用量信息"""
-    system_fingerprint: Optional[str] = None
+    system_fingerprint: str | None = None
     """该指纹代表模型运行的后端配置"""
 
     def __post_init__(self) -> None:

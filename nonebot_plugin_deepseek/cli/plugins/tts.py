@@ -1,5 +1,4 @@
 import asyncio
-from typing import Union
 
 from clilte import BasePlugin, PluginMetadata
 from arclet.alconna.tools import RichConsoleFormatter
@@ -16,7 +15,7 @@ from ...config import tts_config, json_config
 
 
 class TTSUpdate(BasePlugin):
-    def init(self) -> Union[Alconna, str]:
+    def init(self) -> Alconna | str:
         return Alconna(
             "tts",
             Subcommand("update", help_text="更新 TTS 模型列表"),
@@ -27,7 +26,7 @@ class TTSUpdate(BasePlugin):
     def meta(self) -> PluginMetadata:
         return PluginMetadata("TTSUpdate", "0.0.1", "更新 TTS 模型配置缓存", ["tts"], ["FrostN0v0"])
 
-    def dispatch(self, result: Arparma) -> Union[bool, None]:
+    def dispatch(self, result: Arparma) -> bool | None:
         if result.find("tts.update"):
             available_models = asyncio.run(tts_config.get_available_tts())
             if available_models:
@@ -41,5 +40,5 @@ class TTSUpdate(BasePlugin):
         return True
 
     @classmethod
-    def supply_options(cls) -> Union[list[Option], None]:
+    def supply_options(cls) -> list[Option] | None:
         return

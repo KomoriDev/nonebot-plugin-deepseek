@@ -21,7 +21,7 @@ _✨ NoneBot DeepSeek 插件 ✨_
 <a href="">
   <img src="https://img.shields.io/pypi/v/nonebot-plugin-deepseek.svg" alt="pypi" />
 </a>
-<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
+<img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="python">
 <a href="https://github.com/astral-sh/uv">
   <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json" alt="uv-managed">
 </a>

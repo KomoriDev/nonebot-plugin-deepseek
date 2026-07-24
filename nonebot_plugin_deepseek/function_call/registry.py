@@ -4,9 +4,9 @@ import json
 import inspect
 import functools
 import importlib.util
+from typing import Any
 from pathlib import Path
 from collections.abc import Callable
-from typing import Any, Union, Optional
 
 from ..log import ds_logger
 from ..schemas import ToolCalls
@@ -25,7 +25,7 @@ class FunctionRegistry:
             Any: "any",
         }
 
-    def load(self, *directories: str, base_dir: Optional[Union[Path, str]] = None) -> None:
+    def load(self, *directories: str, base_dir: Path | str | None = None) -> None:
         base_path = Path(base_dir).resolve() if base_dir else Path.cwd()
 
         if str(base_path) not in sys.path:
@@ -59,7 +59,7 @@ class FunctionRegistry:
                 except Exception as e:
                     ds_logger("ERROR", f"Failed to loaded {module_name}: {str(e)}")
 
-    def register(self, name: Optional[str] = None, description: Optional[str] = None):
+    def register(self, name: str | None = None, description: str | None = None):
         def decorator(func: Callable):
             nonlocal name, description
             func_name = name or func.__name__

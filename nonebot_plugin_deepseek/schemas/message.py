@@ -1,5 +1,5 @@
+from typing import Literal
 from dataclasses import dataclass
-from typing import Literal, Optional
 
 
 @dataclass
@@ -35,13 +35,13 @@ class Message:
 
     role: Literal["assistant"]
     """生成这条消息的角色"""
-    content: Optional[str] = None
+    content: str | None = None
     """该 completion 的内容"""
-    reasoning_content: Optional[str] = None
+    reasoning_content: str | None = None
     """
     仅适用于 deepseek-v4-pro 模型。内容为 assistant 消息中在最终答案之前的推理内容
     """
-    tool_calls: Optional[list[ToolCalls]] = None
+    tool_calls: list[ToolCalls] | None = None
     """模型生成的 tool 调用"""
 
     def __post_init__(self) -> None:

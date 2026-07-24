@@ -1,7 +1,7 @@
 import re
 import ast
 from enum import Enum
-from typing import Callable
+from collections.abc import Callable
 
 
 class parse_flag(Enum):
