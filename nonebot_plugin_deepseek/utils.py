@@ -1,8 +1,8 @@
 import re
 import importlib
 from dataclasses import asdict
+from typing import Any, Literal
 from collections.abc import Callable, Awaitable
-from typing import Any, Union, Literal, Optional
 
 import httpx
 from nonebot.adapters import Event
@@ -26,24 +26,24 @@ class DeepSeekHandler:
         model: CustomModel,
         is_to_pic: bool,
         is_contextual: bool,
-        tts_model: Optional[CustomTTS] = None,
+        tts_model: CustomTTS | None = None,
     ) -> None:
         self.model: CustomModel = model
         self.is_to_pic: bool = is_to_pic
         self.is_contextual: bool = is_contextual
-        self.tts_model: Optional[CustomTTS] = tts_model
+        self.tts_model: CustomTTS | None = tts_model
         self.event: Event = current_event.get()
         self.matcher: Matcher = current_matcher.get()
         self.message_id: str = get_message_id(self.event)
-        self.waiter: Waiter[Union[str, Literal[False]]] = self._setup_waiter()
+        self.waiter: Waiter[str | Literal[False]] = self._setup_waiter()
 
         self.context: list[dict[str, Any]] = []
 
-        self.md_to_pic: Union[Callable[..., Awaitable[bytes]], None] = (
+        self.md_to_pic: Callable[..., Awaitable[bytes]] | None = (
             importlib.import_module("nonebot_plugin_htmlrender").md_to_pic if self.is_to_pic else None
         )
 
-    async def handle(self, content: Optional[str]) -> None:
+    async def handle(self, content: str | None) -> None:
         if content:
             self.context.append({"role": "user", "content": content})
 
@@ -77,7 +77,7 @@ class DeepSeekHandler:
                 self.waiter.future.set_result("")
                 continue
 
-    def _setup_waiter(self) -> Waiter[Union[str, Literal[False]]]:
+    def _setup_waiter(self) -> Waiter[str | Literal[False]]:
         permission = Permission(User.from_event(self.event, perm=self.matcher.permission))
         waiter = Waiter(
             waits=["message"],
@@ -88,7 +88,7 @@ class DeepSeekHandler:
         waiter.future.set_result("")
         return waiter
 
-    def _waiter_handler(self, msg: UniMsg, skip: bool = False) -> Union[str, Literal[False]]:
+    def _waiter_handler(self, msg: UniMsg, skip: bool = False) -> str | Literal[False]:
         text = msg.extract_plain_text()
         if not skip:
             self.message_id = get_message_id()
@@ -122,7 +122,7 @@ class DeepSeekHandler:
 
         await message_reaction(emoji, message_id=self.message_id)
 
-    async def _process_waiter_response(self, resp: Union[bool, str]) -> None:
+    async def _process_waiter_response(self, resp: bool | str) -> None:
         timeout = ds_config.timeout if isinstance(ds_config.timeout, int) else ds_config.timeout.user_input
 
         if resp == "" and not self.context:
@@ -187,7 +187,7 @@ class DeepSeekHandler:
         )
         return True
 
-    async def _get_response_message(self) -> Optional[Message]:
+    async def _get_response_message(self) -> Message | None:
         try:
             completion = await API.chat(self.context, self.model.name)
             return completion.choices[0].message

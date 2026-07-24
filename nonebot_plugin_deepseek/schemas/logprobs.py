@@ -1,4 +1,3 @@
-from typing import Optional
 from dataclasses import dataclass
 
 
@@ -15,7 +14,7 @@ class TopLogprobs:
     """
     该 token 的对数概率
     `-9999.0` 代表该 token 的输出概率极小，不在 top 20 最可能输出的 token 中"""
-    bytes: Optional[list[int]] = None
+    bytes: list[int] | None = None
     """
     一个包含该 token UTF-8 字节表示的整数列表
     一般在一个 UTF-8 字符被拆分成多个 token 来表示时有用
@@ -38,7 +37,7 @@ class Content:
     一个包含在该输出位置上，输出概率 top N 的 token 的列表，以及它们的对数概率
     在罕见情况下，返回的 token 数量可能少于请求参数中指定的 `top_logprobs` 值
     """
-    bytes: Optional[list[int]] = None
+    bytes: list[int] | None = None
     """
     一个包含该 token UTF-8 字节表示的整数列表
     一般在一个 UTF-8 字符被拆分成多个 token 来表示时有用
@@ -57,7 +56,7 @@ class Content:
 class Logprobs:
     """该 choice 的对数概率信息"""
 
-    content: Optional[list[Content]] = None
+    content: list[Content] | None = None
 
     def __post_init__(self) -> None:
         if self.content:

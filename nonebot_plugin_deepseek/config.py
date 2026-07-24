@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
 from copy import deepcopy
+from collections.abc import Callable
 from importlib.util import find_spec
-from typing import Any, Union, Literal, Callable, ClassVar, Optional
+from typing import Any, Literal, ClassVar
 
 from nonebot.compat import PYDANTIC_V2
 import nonebot_plugin_localstore as store
@@ -40,9 +41,9 @@ class ModelConfig:
         self.default_model: str = ds_config.get_enable_models()[0]
         self.enable_md_to_pic: bool = ds_config.md_to_pic
         self.available_tts_models: dict[str, dict[str, list[str]]] = {}
-        self.default_tts_model: Optional[str] = None
+        self.default_tts_model: str | None = None
 
-        self.prompt_func: Optional[Callable[[dict[str, Any]], str]] = None
+        self.prompt_func: Callable[[dict[str, Any]], str] | None = None
         self.load()
 
     def load(self):
@@ -107,15 +108,15 @@ class CustomModel(BaseModel):
     """Model Name"""
     base_url: str = "https://api.deepseek.com"
     """Custom base URL for this model (optional)"""
-    alias: Optional[str] = None
+    alias: str | None = None
     """Model alias name"""
-    api_key: Optional[str] = None
+    api_key: str | None = None
     """Custom API Key for the model (optional)"""
-    prompt: Optional[str] = None
+    prompt: str | None = None
     """Custom character preset for the model (optional)"""
-    proxy: Optional[str] = None
+    proxy: str | None = None
     """A proxy URL where all the deepseek's traffic should be routed"""
-    stream: Optional[bool] = Field(default=None)
+    stream: bool | None = Field(default=None)
     """Streaming"""
     max_tokens: int = Field(default=4090, gt=1, lt=8192)
     """
@@ -123,22 +124,22 @@ class CustomModel(BaseModel):
     - `deepseek-v4-flash`: Integer between 1 and 8192. Default is 4090.
     - `deepseek-v4-pro`: Default is 4K, maximum is 8K.
     """
-    frequency_penalty: Union[int, float] = Field(default=0, ge=-2, le=2)
+    frequency_penalty: int | float = Field(default=0, ge=-2, le=2)
     """
     Discourage the model from repeating the same words or phrases too frequently within the generated text
     """
-    presence_penalty: Union[int, float] = Field(default=0, ge=-2, le=2)
+    presence_penalty: int | float = Field(default=0, ge=-2, le=2)
     """Encourage the model to include a diverse range of tokens in the generated text"""
-    stop: Optional[Union[str, list[str]]] = Field(default=None)
+    stop: str | list[str] | None = Field(default=None)
     """
     Stop generating tokens when encounter these words.
     Note that the list contains a maximum of 16 string.
     """
-    temperature: Union[int, float] = Field(default=1, ge=0, le=2)
+    temperature: int | float = Field(default=1, ge=0, le=2)
     """Sampling temperature. It is not recommended to used it with top_p"""
-    top_p: Union[int, float] = Field(default=1, ge=0, le=1)
+    top_p: int | float = Field(default=1, ge=0, le=1)
     """Alternatives to sampling temperature. It is not recommended to used it with temperature"""
-    logprobs: NotGivenOr[Union[bool, None]] = Field(default=NOT_GIVEN)
+    logprobs: NotGivenOr[bool | None] = Field(default=NOT_GIVEN)
     """Whether to return the log probability of the output token."""
     top_logprobs: NotGivenOr[int] = Field(default=NOT_GIVEN, le=20)
     """Specifies that the most likely token be returned at each token position."""
@@ -216,27 +217,27 @@ class CustomTTS(BaseModel):
     """language of the text to be synthesized"""
     top_k: int = Field(default=10, ge=1, le=100)
     """top k sampling"""
-    top_p: Union[int, float] = Field(default=1, ge=0.01, le=1)
+    top_p: int | float = Field(default=1, ge=0.01, le=1)
     """top p sampling"""
-    temperature: Union[int, float] = Field(default=1, ge=0.01, le=1)
+    temperature: int | float = Field(default=1, ge=0.01, le=1)
     """temperature for sampling"""
     text_split_method: str = "按标点符号切"
     """Text Split Method"""
     batch_size: int = Field(default=10, gt=1, lt=200)
     """ batch size for inference"""
-    batch_threshold: Union[int, float] = Field(default=0.75, ge=0, le=1)
+    batch_threshold: int | float = Field(default=0.75, ge=0, le=1)
     """threshold for batch splitting."""
     split_bucket: bool = True
     """whether to split the batch into multiple buckets."""
-    speed_facter: Union[int, float] = Field(default=1, ge=0.01, le=2)
+    speed_facter: int | float = Field(default=1, ge=0.01, le=2)
     """control the speed of the synthesized audio."""
-    fragment_interval: Union[int, float] = Field(default=0.3, ge=0.01, le=1)
+    fragment_interval: int | float = Field(default=0.3, ge=0.01, le=1)
     """Fragment Interval"""
     media_type: Literal["wav", "ogg", "acc"] = "wav"
     """Media Output Type"""
     parallel_infer: bool = True
     """Parallel Infer"""
-    repetition_penalty: Union[int, float] = Field(default=1.35, ge=0, le=2)
+    repetition_penalty: int | float = Field(default=1.35, ge=0, le=2)
     """repetition penalty for T2S model."""
     seed: int = -1
     """random seed for reproducibility."""
@@ -278,7 +279,7 @@ class ScopedConfig(BaseModel):
     """Text to Image"""
     enable_send_thinking: bool = False
     """Whether to send model thinking chain"""
-    timeout: Union[int, TimeoutConfig] = Field(default_factory=TimeoutConfig)
+    timeout: int | TimeoutConfig = Field(default_factory=TimeoutConfig)
     """Timeout"""
     stream: bool = False
     """Stream"""
@@ -302,7 +303,7 @@ class ScopedConfig(BaseModel):
 
 
 class ScopedTTSConfig(BaseModel):
-    enable_models: Union[list[CustomTTS], bool] = False
+    enable_models: list[CustomTTS] | bool = False
     """List of TTS models configurations"""
     base_url: str = ""
     """Your GPT-Sovits API Url """
@@ -354,7 +355,7 @@ class Config(BaseModel):
     """DeepSeek Plugin Config"""
     deepseek_tts: ScopedTTSConfig = Field(default_factory=ScopedTTSConfig)
     """DeepSeek TTS Plugin Config"""
-    deepseek_external_config: Optional[str] = None
+    deepseek_external_config: str | None = None
     """External YAML configuration file path"""
 
     @model_validator(mode="after")

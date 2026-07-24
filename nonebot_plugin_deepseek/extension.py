@@ -1,5 +1,4 @@
 import inspect
-from typing import Union
 
 from nonebot.typing import T_State
 from nonebot_plugin_alconna.uniseg import UniMessage
@@ -17,8 +16,8 @@ class CleanDocExtension(Extension):
     def id(self) -> str:
         return "CleanDoc"
 
-    async def send_wrapper(self, bot: Bot, event: Event, send: Union[str, Message, UniMessage]):
-        plain_text = send if isinstance(send, (Message, UniMessage)) else inspect.cleandoc(send)
+    async def send_wrapper(self, bot: Bot, event: Event, send: str | Message | UniMessage):
+        plain_text = send if isinstance(send, Message | UniMessage) else inspect.cleandoc(send)
         return plain_text
 
 

@@ -1,5 +1,5 @@
 from json import loads
-from typing import Union, Literal, Optional
+from typing import Literal
 
 import httpx
 
@@ -116,7 +116,7 @@ class API:
             raise RequestException(f"连接 TTS 服务器失败: {e}")
 
 
-async def common_request(base_url: str, api_key: str, json: dict, proxy: Optional[str] = None):
+async def common_request(base_url: str, api_key: str, json: dict, proxy: str | None = None):
     timeout_config = ds_config.timeout
     async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.post(
@@ -133,7 +133,7 @@ async def common_request(base_url: str, api_key: str, json: dict, proxy: Optiona
     return ChatCompletions(**response.json())
 
 
-async def stream_request(base_url: str, api_key: str, json: dict, proxy: Optional[str] = None):
+async def stream_request(base_url: str, api_key: str, json: dict, proxy: str | None = None):
     json["stream"] = True
     async with httpx.AsyncClient(http2=True, proxy=proxy, timeout=None) as client:
         async with client.stream(
@@ -145,7 +145,7 @@ async def stream_request(base_url: str, api_key: str, json: dict, proxy: Optiona
             },
             json=json,
         ) as response:
-            ret_list: Optional[StreamChoiceList] = None
+            ret_list: StreamChoiceList | None = None
             async for chunk in response.aiter_lines():
                 ret = sse_middle(chunk)
                 if ret is None:
@@ -177,7 +177,7 @@ async def stream_request(base_url: str, api_key: str, json: dict, proxy: Optiona
 
 def sse_middle(
     line: str,
-) -> Union[tuple[Literal["data", "event", "id", "retry", "::", "error"], str], None]:
+) -> tuple[Literal["data", "event", "id", "retry", "::", "error"], str] | None:
     """单行SSE数据解析"""
     line = line.strip("\r")
     if not line:
